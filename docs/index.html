@@ -257,6 +257,9 @@ body {
   box-shadow: 0 0 6px rgba(74,144,217,.4);
   pointer-events: none;
 }
+/* Inbox drag indicators */
+.inbox-item.drop-before { border-top: 3px solid #4A90D9; }
+.inbox-item.drop-after { border-bottom: 3px solid #4A90D9; }
 
 /* ========== Task Card ========== */
 .task-card {
@@ -817,6 +820,10 @@ body {
         <span class="nav-icon">📥</span> 收件箱
         <span class="nav-badge" id="navBadgeInbox">0</span>
       </button>
+      <button class="sidebar-nav-item" data-view="archived">
+        <span class="nav-icon">📦</span> 归档
+        <span class="nav-badge" id="navBadgeArchived">0</span>
+      </button>
     </div>
 
     <!-- Tag Filter Section (Collapsible) -->
@@ -960,6 +967,16 @@ body {
       <span class="inbox-count" id="inboxCount"></span>
     </div>
     <div class="inbox-list" id="inboxList"></div>
+  </div>
+
+  <!-- Archived View -->
+  <div class="view abs-hide" id="view-archived">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+      <h2 style="font-size:18px;font-weight:600;">📦 归档</h2>
+      <input type="text" id="archivedSearch" placeholder="搜索归档..." oninput="renderArchived()" style="flex:1;min-width:160px;padding:8px 14px;border:1px solid #ddd;border-radius:8px;font-size:13px;">
+      <span class="inbox-count" id="archivedCount"></span>
+    </div>
+    <div class="inbox-list" id="archivedList"></div>
   </div>
 </div><!-- end .main -->
 </div><!-- end .app-main -->
@@ -1129,6 +1146,7 @@ function rowToTask(row) {
     subtasks: row.subtasks || [],
     order: row.order || 0,
     recurrence: row.recurrence || null,
+    archived: row.archived || false,
     created_at: row.created_at,
     updated_at: row.updated_at,
   };
@@ -1146,6 +1164,7 @@ function taskToRow(task) {
     subtasks: task.subtasks || [],
     order: task.order || 0,
     recurrence: task.recurrence || null,
+    archived: task.archived || false,
   };
   if (task.id) row.id = task.id;
   return row;
@@ -1515,6 +1534,7 @@ function taskCardHTML(task) {
     <div class="${cls}" draggable="true" data-id="${task.id}" data-status="${task.status}">
       <div class="task-card-actions">
         <button onclick="event.stopPropagation(); editTask('${task.id}')" title="编辑">✎</button>
+        <button onclick="event.stopPropagation(); archiveTask('${task.id}')" title="归档">📦</button>
         <button class="del" onclick="event.stopPropagation(); doDeleteTask('${task.id}')" title="删除">✕</button>
       </div>
       <div class="task-card-title">${esc(task.title)}</div>
@@ -1732,7 +1752,7 @@ function renderOverview() {
   tagSelect.innerHTML = '<option value="all">全部标签</option>' + allTags.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
   tagSelect.value = allTags.includes(currentVal) ? currentVal : 'all';
 
-  let filtered = tasks;
+  let filtered = tasks.filter(t => !t.archived);
   // Archive toggle: hide done tasks by default
   const hideDone = document.getElementById('archiveToggle')?.checked;
   if (hideDone && filter !== 'done') filtered = filtered.filter(t => t.status !== 'done');
@@ -1816,7 +1836,7 @@ function renderInbox() {
   const filter = document.getElementById('inboxFilter')?.value || 'all';
   const priority = document.getElementById('inboxPriority')?.value || 'all';
 
-  let inboxTasks = tasks.filter(t => !t.date).sort((a, b) => (a.order || 0) - (b.order || 0));
+  let inboxTasks = tasks.filter(t => !t.date && !t.archived).sort((a, b) => (a.order || 0) - (b.order || 0));
   if (filter !== 'all') inboxTasks = inboxTasks.filter(t => t.status === filter);
   if (priority !== 'all') inboxTasks = inboxTasks.filter(t => t.priority === priority);
   if (search) inboxTasks = inboxTasks.filter(t =>
@@ -1824,8 +1844,8 @@ function renderInbox() {
     (t.desc||'').toLowerCase().includes(search)
   );
 
-  const totalInbox = tasks.filter(t => !t.date).length;
-  const doneInbox = tasks.filter(t => !t.date && t.status === 'done').length;
+  const totalInbox = tasks.filter(t => !t.date && !t.archived).length;
+  const doneInbox = tasks.filter(t => !t.date && !t.archived && t.status === 'done').length;
   document.getElementById('inboxCount').textContent =
     `📥 ${totalInbox} 条` +
     (doneInbox ? `（${doneInbox} 已完成）` : '');
@@ -1837,7 +1857,7 @@ function renderInbox() {
   }
 
   list.innerHTML = inboxTasks.map(t => `
-    <div class="inbox-item priority-${t.priority}${t.status === 'done' ? ' done' : ''}">
+    <div class="inbox-item priority-${t.priority}${t.status === 'done' ? ' done' : ''}" draggable="true" data-id="${t.id}">
       <span class="cb-circle${t.status === 'done' ? ' checked' : ''}"
             onclick="toggleTaskStatus('${t.id}')" title="${t.status === 'done' ? '标记待办' : '标记完成'}"></span>
       <div class="inbox-item-body">
@@ -1851,10 +1871,12 @@ function renderInbox() {
       <div class="inbox-item-actions">
         <button class="inbox-btn assign-date" onclick="assignInboxDate('${t.id}', event)" title="分配日期">📅</button>
         <button class="inbox-btn" onclick="editTask('${t.id}')" title="编辑">✎</button>
+        <button class="inbox-btn" onclick="archiveTask('${t.id}')" title="归档">📦</button>
         <button class="inbox-btn del" onclick="doDeleteTask('${t.id}')" title="删除">✕</button>
       </div>
     </div>
   `).join('');
+  setupInboxDragDrop();
 }
 
 function inboxQuickAdd() {
@@ -1904,11 +1926,69 @@ function assignInboxDate(id, e) {
   });
 }
 
+// ==================== ARCHIVE ====================
+function archiveTask(id) {
+  const task = tasks.find(t => t.id === id);
+  if (!task) return;
+  task.archived = true;
+  task.status = 'done';
+  renderAll();
+  apiPatchTask(id, { archived: true, status: 'done' })
+    .then(() => {})
+    .catch(e => { console.error('归档失败:', e); showToast('归档失败', 'error'); });
+}
+
+function restoreTask(id) {
+  const task = tasks.find(t => t.id === id);
+  if (!task) return;
+  task.archived = false;
+  renderAll();
+  apiPatchTask(id, { archived: false })
+    .then(() => {})
+    .catch(e => { console.error('恢复失败:', e); showToast('恢复失败', 'error'); });
+}
+
+function renderArchived() {
+  const search = (document.getElementById('archivedSearch')?.value || '').toLowerCase();
+  let archived = tasks.filter(t => t.archived);
+  if (search) archived = archived.filter(t =>
+    t.title.toLowerCase().includes(search) || (t.desc||'').toLowerCase().includes(search)
+  );
+  archived.sort((a, b) => (a.order || 0) - (b.order || 0));
+
+  document.getElementById('archivedCount').textContent = `📦 ${archived.length} 条`;
+
+  const list = document.getElementById('archivedList');
+  if (!archived.length) {
+    list.innerHTML = `<div class="inbox-empty"><div class="icon">📦</div><div class="text">暂无归档任务</div></div>`;
+    return;
+  }
+
+  list.innerHTML = archived.map(t => `
+    <div class="inbox-item priority-${t.priority} done">
+      <div class="inbox-item-body">
+        <div class="inbox-item-title done">${esc(t.title)}</div>
+        ${t.desc ? `<div class="inbox-item-desc">${esc(t.desc)}</div>` : ''}
+        <div class="inbox-item-meta">
+          <span class="priority-tag ${t.priority}">${priorityLabel(t.priority)}</span>
+          ${tagChipsHTML(t.tags || [])}
+          ${t.date ? `<span style="font-size:12px;color:#888;">📅 ${t.date}</span>` : ''}
+        </div>
+      </div>
+      <div class="inbox-item-actions">
+        <button class="inbox-btn" onclick="restoreTask('${t.id}')" title="恢复">↩️</button>
+        <button class="inbox-btn" onclick="editTask('${t.id}')" title="编辑">✎</button>
+        <button class="inbox-btn del" onclick="doDeleteTask('${t.id}')" title="删除">✕</button>
+      </div>
+    </div>
+  `).join('');
+}
+
 // ==================== KANBAN (Day View) ====================
 function renderKanban() {
   const dateStr = dayViewDate || todayStr();
   document.getElementById('kanbanDate').value = dateStr;
-  const dayTasks = tasks.filter(t => t.date === dateStr);
+  const dayTasks = tasks.filter(t => t.date === dateStr && !t.archived);
 
   ['todo','done'].forEach(status => {
     const el = document.getElementById('kanban-' + status);
@@ -1963,7 +2043,7 @@ function renderWeek() {
     const ds = fmt(d);
     const isToday = ds === today;
     const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-    const dayTasks = tasks.filter(t => t.date === ds);
+    const dayTasks = tasks.filter(t => t.date === ds && !t.archived);
     return `
       <div class="week-day${isToday?' today':''}" data-date="${ds}">
         <div class="week-day-header" onclick="openDayView('${ds}')" title="点击查看当日看板">
@@ -2041,7 +2121,7 @@ function renderMonth() {
   for (let d = 1; d <= totalDays; d++) {
     const ds = `${year}-${String(month + 1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const isToday = ds === today;
-    const dayTasks = tasks.filter(t => t.date === ds);
+    const dayTasks = tasks.filter(t => t.date === ds && !t.archived);
 
     const maxItems = window.innerWidth < 500 ? 2 : 5;
     const items = dayTasks.slice(0, maxItems);
@@ -2295,13 +2375,101 @@ function setupKanbanDragDrop() {
   });
 }
 
+// ==================== INBOX DRAG SORT ====================
+function setupInboxDragDrop() {
+  const list = document.getElementById('inboxList');
+  if (!list || list._ddInbox) return;
+  list._ddInbox = true;
+
+  list.addEventListener('dragover', e => {
+    e.preventDefault();
+    const item = e.target.closest('.inbox-item');
+    if (!item || !draggedTaskId) return;
+    // Show indicator
+    clearInboxIndicator();
+    const rect = item.getBoundingClientRect();
+    const mid = rect.top + rect.height / 2;
+    if (e.clientY < mid) {
+      item.classList.add('drop-before');
+    } else {
+      item.classList.add('drop-after');
+    }
+  });
+
+  list.addEventListener('dragleave', e => {
+    if (!list.contains(e.relatedTarget)) clearInboxIndicator();
+  });
+
+  list.addEventListener('drop', async e => {
+    e.preventDefault();
+    clearInboxIndicator();
+    const targetItem = e.target.closest('.inbox-item');
+    if (!targetItem || !draggedTaskId) return;
+    const taskId = draggedTaskId;
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    const rect = targetItem.getBoundingClientRect();
+    const mid = rect.top + rect.height / 2;
+    const targetId = targetItem.dataset.id;
+    const targetTask = tasks.find(t => t.id === targetId);
+    if (!targetTask) return;
+
+    // Calculate new order
+    const insertBefore = e.clientY < mid;
+    const refOrder = targetTask.order || 0;
+    let newOrder;
+    if (insertBefore) {
+      const prev = [...list.querySelectorAll('.inbox-item')]
+        .find(it => it.dataset.id === targetId)
+        ?.previousElementSibling;
+      const prevId = prev && prev.dataset.id ? prev.dataset.id : null;
+      const prevTask = prevId ? tasks.find(t => t.id === prevId) : null;
+      const prevOrder = prevTask ? (prevTask.order || 0) : (refOrder - 100);
+      newOrder = (prevOrder + refOrder) / 2;
+    } else {
+      const next = [...list.querySelectorAll('.inbox-item')]
+        .find(it => it.dataset.id === targetId)
+        ?.nextElementSibling;
+      const nextId = next && next.dataset.id ? next.dataset.id : null;
+      const nextTask = nextId ? tasks.find(t => t.id === nextId) : null;
+      const nextOrder = nextTask ? (nextTask.order || 0) : (refOrder + 100);
+      newOrder = (refOrder + nextOrder) / 2;
+    }
+
+    // Optimistic update
+    task.order = newOrder;
+    renderAll();
+
+    // Async sync
+    apiPatchTask(taskId, { order: newOrder })
+      .then(() => {})
+      .catch(e => { console.error('inbox排序同步失败:', e); });
+  });
+}
+
+function clearInboxIndicator() {
+  document.querySelectorAll('#inboxList .inbox-item').forEach(el => {
+    el.classList.remove('drop-before', 'drop-after');
+  });
+}
+
 document.addEventListener('dragstart', e => {
   const card = e.target.closest('.task-card');
-  if (!card) return;
-  draggedTaskId = card.dataset.id;
-  e.dataTransfer.setData('text/plain', card.dataset.id);
-  e.dataTransfer.effectAllowed = 'move';
-  setTimeout(() => card.classList.add('dragging'), 0);
+  if (card) {
+    draggedTaskId = card.dataset.id;
+    e.dataTransfer.setData('text/plain', card.dataset.id);
+    e.dataTransfer.effectAllowed = 'move';
+    setTimeout(() => card.classList.add('dragging'), 0);
+    return;
+  }
+  // Inbox drag
+  const item = e.target.closest('.inbox-item');
+  if (item) {
+    draggedTaskId = item.dataset.id;
+    e.dataTransfer.setData('text/plain', item.dataset.id);
+    e.dataTransfer.effectAllowed = 'move';
+  }
 });
 
 document.addEventListener('dragend', e => {
@@ -2388,6 +2556,7 @@ function updateSidebarStats() {
   document.getElementById('sidebarStatProgress').textContent = inProgress;
   document.getElementById('navBadgeTotal').textContent = total;
   document.getElementById('navBadgeInbox').textContent = inboxCount || '0';
+  document.getElementById('navBadgeArchived').textContent = tasks.filter(t => t.archived).length || '0';
 }
 
 // ==================== VIEW SWITCHING ====================
@@ -2424,6 +2593,7 @@ function renderView(view) {
     case 'week': renderWeek(); break;
     case 'month': renderMonth(); break;
     case 'inbox': renderInbox(); break;
+    case 'archived': renderArchived(); break;
   }
 }
 
