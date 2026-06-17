@@ -960,10 +960,9 @@ body {
         <option value="medium">中</option>
         <option value="low">低</option>
       </select>
-      <span class="inbox-count" id="inboxCount"></span>
       <label class="filter-toggle" id="inboxArchiveLabel" onclick="toggleInboxArchive()" title="隐藏已完成任务">
         <input type="checkbox" id="inboxArchiveToggle" onchange="renderInbox()">
-        <span class="filter-toggle-text">📁 归档</span>
+        <span class="filter-toggle-text">归档</span>
       </label>
     </div>
     <div class="inbox-list" id="inboxList"></div>
@@ -1833,12 +1832,6 @@ function renderInbox() {
     t.title.toLowerCase().includes(search) ||
     (t.desc||'').toLowerCase().includes(search)
   );
-
-  const totalInbox = tasks.filter(t => !t.date).length;
-  const doneInbox = tasks.filter(t => !t.date && t.status === 'done').length;
-  document.getElementById('inboxCount').textContent =
-    `📥 ${totalInbox} 条` +
-    (doneInbox ? `（${doneInbox} 已完成）` : '');
 
   const list = document.getElementById('inboxList');
   if (!inboxTasks.length) {
