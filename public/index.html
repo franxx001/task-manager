@@ -2,8 +2,12 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#4A90D9">
 <title>任务管理器</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✅</text></svg>">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <style>
 /* ========== Reset & Base ========== */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -117,6 +121,45 @@ body {
   display: none; transition: opacity .25s;
 }
 .sidebar-overlay.show { display: block; }
+
+/* ========== Login Overlay ========== */
+.login-overlay {
+  position: fixed; inset: 0; background: #f0f2f5; z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
+  transition: opacity .3s ease;
+}
+.login-overlay.hidden { opacity: 0; pointer-events: none; }
+.login-card {
+  background: #fff; border-radius: 16px; padding: 40px; width: 400px;
+  max-width: 90vw; box-shadow: 0 4px 24px rgba(0,0,0,.08);
+  text-align: center;
+}
+.login-card h2 { font-size: 24px; font-weight: 700; color: #1a1a2e; margin-bottom: 8px; }
+.login-card p { font-size: 14px; color: #888; margin-bottom: 24px; }
+.login-input {
+  width: 100%; padding: 12px 16px; border: 2px solid #e8e8e8;
+  border-radius: 10px; font-size: 16px; outline: none; transition: border-color .2s;
+  text-align: center; letter-spacing: 2px;
+}
+.login-input:focus { border-color: #4A90D9; }
+.login-btn {
+  width: 100%; padding: 12px; margin-top: 16px;
+  background: #4A90D9; color: #fff; border: none; border-radius: 10px;
+  font-size: 16px; font-weight: 600; cursor: pointer; transition: background .2s;
+}
+.login-btn:hover { background: #357ABD; }
+.login-btn:disabled { background: #b0c4de; cursor: not-allowed; }
+.login-error { color: #e74c3c; font-size: 13px; margin-top: 12px; min-height: 20px; }
+.login-key-display {
+  background: #f5f7fa; border-radius: 8px; padding: 12px; margin-bottom: 20px;
+  font-size: 12px; color: #666; line-height: 1.6;
+}
+.login-key-display code {
+  display: block; font-size: 14px; color: #4A90D9; font-weight: 600;
+  word-break: break-all; margin-top: 4px;
+  background: #e6f0ff; padding: 8px 12px; border-radius: 6px;
+}
+
 @media (max-width: 768px) {
   .sidebar { position: fixed; left: 0; top: 0; height: 100vh; z-index: 111; }
   .sidebar.collapsed { transform: translateX(-100%); width: 240px; min-width: 240px; }
@@ -677,11 +720,11 @@ body {
 
 /* ========== Bottom Progress ========== */
 .bottom-bar {
-  position: sticky; bottom: 0;
+  position: fixed; bottom: 0; left: 0; right: 0;
   background: #fff; border-top: 1px solid #e8e8e8;
   padding: 10px 24px; display: flex; align-items: center; gap: 14px;
-  z-index: 100; box-shadow: 0 -1px 4px rgba(0,0,0,.04);
-  margin-top: auto;
+  z-index: 130; box-shadow: 0 -1px 4px rgba(0,0,0,.04);
+  transition: left .25s ease;
 }
 .progress-wrapper { flex: 1; display: flex; align-items: center; gap: 12px; }
 .progress-bar-outer {
@@ -695,6 +738,7 @@ body {
 }
 .progress-text { font-size: 13px; font-weight: 600; color: #1a1a2e; white-space: nowrap; }
 .progress-detail { font-size: 12px; color: #888; white-space: nowrap; }
+.progress-inbox { font-size: 12px; color: #4A90D9; white-space: nowrap; }
 
 /* ========== Empty State ========== */
 .empty-state {
@@ -724,18 +768,34 @@ body {
   .month-task-text { font-size: 9px; }
   .month-dot { width: 4px; height: 4px; }
 }
+
 </style>
 </head>
 <body>
 
 <!-- App Shell: Sidebar + Main -->
+<!-- Login Overlay -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-card">
+    <h2>🔑 任务管理器</h2>
+    <p>请输入密钥以继续</p>
+    <div class="login-key-display" id="loginKeyHelp" style="display:none;">
+      密钥保存在服务器 <code>data/auth.json</code> 文件中<br>
+      首次启动时已打印在控制台
+    </div>
+    <input class="login-input" id="loginKeyInput" type="password" placeholder="输入登录密钥" autofocus>
+    <button class="login-btn" id="loginBtn">登录</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
 <div class="app-shell">
 
 <!-- Sidebar -->
 <div class="sidebar" id="sidebar">
   <div class="sidebar-header">
     <span class="sidebar-logo">📋 任务管理器</span>
-    <button class="sidebar-toggle" onclick="toggleSidebar()" title="折叠侧边栏">◀</button>
+    <button class="sidebar-toggle" onclick="toggleSidebar()" title="折叠侧边栏">☰</button>
   </div>
   <div class="sidebar-body">
     <!-- Nav Items -->
@@ -779,7 +839,7 @@ body {
 </div>
 
 <!-- Floating toggle (visible when sidebar collapsed) -->
-<button class="sidebar-float-toggle" onclick="toggleSidebar()" title="展开侧边栏">☰</button>
+<button class="sidebar-float-toggle" id="sidebarFloatToggle" title="展开侧边栏">☰</button>
 
 <!-- Sidebar overlay for mobile -->
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeMobileSidebar()"></div>
@@ -819,7 +879,7 @@ body {
         <option value="all">全部标签</option>
       </select>
       <label class="filter-toggle" id="archiveLabel" onclick="toggleArchive()" title="点击切换显示已完成任务">
-        <input type="checkbox" id="archiveToggle" onchange="renderOverview()" checked>
+        <input type="checkbox" id="archiveToggle" onchange="renderOverview()">
         <span>归档</span>
       </label>
       <button class="btn btn-ghost btn-select" id="btnSelectMode" onclick="toggleSelectMode()">多选</button>
@@ -905,15 +965,7 @@ body {
 </div><!-- end .app-main -->
 </div><!-- end .app-shell -->
 
-<!-- Undo Bar -->
-<div class="undo-bar" id="undoBar" style="display:none;">
-  <span class="undo-icon">↩</span>
-  <span id="undoText"></span>
-  <button class="btn undo-btn" onclick="undoDelete()">撤销</button>
-  <button class="btn undo-dismiss-btn" onclick="document.getElementById('undoBar').style.display='none'">✕</button>
-</div>
-
-<!-- Bottom Progress Bar -->
+<!-- Bottom Progress Bar (full width) -->
 <div class="bottom-bar" id="bottomBar">
   <div class="progress-wrapper">
     <span style="font-size:14px;">📊</span>
@@ -922,8 +974,16 @@ body {
     </div>
     <span class="progress-text" id="progressText">0%</span>
     <span class="progress-detail" id="progressDetail"></span>
-    <span class="progress-inbox" id="progressInbox" style="font-size:12px;color:#4A90D9;white-space:nowrap;"></span>
+    <span class="progress-inbox" id="progressInbox"></span>
   </div>
+</div>
+
+<!-- Undo Bar -->
+<div class="undo-bar" id="undoBar" style="display:none;">
+  <span class="undo-icon">↩</span>
+  <span id="undoText"></span>
+  <button class="btn undo-btn" onclick="undoDelete()">撤销</button>
+  <button class="btn undo-dismiss-btn" onclick="document.getElementById('undoBar').style.display='none'">✕</button>
 </div>
 
 <!-- Toast -->
@@ -1007,59 +1067,160 @@ body {
 </div>
 
 <script>
-// ==================== API LAYER ====================
-const API_BASE = '/api/tasks';
+// ==================== SUPABASE INIT ====================
+const SUPABASE_URL = 'https://bbcwbuutltmodlkldezf.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJiY3didXV0bHRtb2Rsa2xkZXpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2NzAzNDAsImV4cCI6MjA5NzI0NjM0MH0.hmXOvHFevOKTFy-_bNV9z8a0Mage9qUOmaFl9-_L9yc';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-let tasks = [];
-let editingId = null;
-let currentView = 'overview';
-let weekOffset = 0;
-let monthOffset = 0;
-let dayViewDate = null;
+// ==================== AUTH ====================
+let sessionUser = null;
+
+function isLoggedIn() { return !!sessionUser; }
+
+function getAuthToken() { return localStorage.getItem('task-session') || ''; }
+
+async function keyToEmail(key) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(key + ':task-manager-supabase');
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  const hex = Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join('');
+  return hex.substring(0, 16) + '@tm.local';
+}
+
+async function apiLogin(key) {
+  const email = await keyToEmail(key);
+  // Try sign in first
+  let { data, error } = await supabase.auth.signInWithPassword({ email, password: key });
+  if (error) {
+    // User doesn't exist yet — sign up
+    const result = await supabase.auth.signUp({ email, password: key });
+    if (result.error) throw new Error(result.error.message);
+    // Sign in again after signup
+    const signin = await supabase.auth.signInWithPassword({ email, password: key });
+    if (signin.error) throw new Error(signin.error.message);
+    data = signin.data;
+  }
+  sessionUser = data.user;
+  localStorage.setItem('task-session', '1');
+  return data.user;
+}
+
+async function apiLogout() {
+  await supabase.auth.signOut();
+  sessionUser = null;
+  localStorage.removeItem('task-session');
+}
+
+// ==================== SUPABASE DATA LAYER ====================
+const TASKS_TABLE = 'tasks';
+
+// Transform Supabase row to app task format (description → desc)
+function rowToTask(row) {
+  return {
+    id: row.id,
+    title: row.title,
+    desc: row.description || '',
+    status: row.status,
+    priority: row.priority,
+    date: row.date || '',
+    tags: row.tags || [],
+    subtasks: row.subtasks || [],
+    order: row.order || 0,
+    recurrence: row.recurrence || null,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  };
+}
+
+// Transform app task to Supabase row format
+function taskToRow(task) {
+  const row = {
+    title: task.title,
+    description: task.desc || '',
+    status: task.status || 'todo',
+    priority: task.priority || 'medium',
+    date: task.date || '',
+    tags: task.tags || [],
+    subtasks: task.subtasks || [],
+    order: task.order || 0,
+    recurrence: task.recurrence || null,
+  };
+  if (task.id) row.id = task.id;
+  return row;
+}
 
 async function apiGetTasks() {
-  const res = await fetch(API_BASE);
-  if (!res.ok) throw new Error('Failed to load tasks');
-  const json = await res.json();
-  return json.data;
+  const { data, error } = await supabase
+    .from(TASKS_TABLE)
+    .select('*')
+    .order('order', { ascending: true });
+  if (error) throw new Error(error.message);
+  return (data || []).map(rowToTask);
 }
 
 async function apiCreateTask(data) {
-  const res = await fetch(API_BASE, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
-  });
-  if (!res.ok) { const e = await res.json(); throw new Error(e.error || '创建失败'); }
-  const json = await res.json();
-  return json.data;
+  const row = taskToRow(data);
+  row.id = 't_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+  const { data: result, error } = await supabase
+    .from(TASKS_TABLE)
+    .insert(row)
+    .select()
+    .single();
+  if (error) throw new Error(error.message);
+  return rowToTask(result);
 }
 
 async function apiUpdateTask(id, data) {
-  const res = await fetch(API_BASE + '/' + id, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
-  });
-  if (!res.ok) throw new Error('更新失败');
-  const json = await res.json();
-  return json.data;
+  const row = taskToRow(data);
+  const { data: result, error } = await supabase
+    .from(TASKS_TABLE)
+    .update(row)
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw new Error(error.message);
+  return rowToTask(result);
 }
 
 async function apiPatchTask(id, data) {
-  const res = await fetch(API_BASE + '/' + id, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
-  });
-  if (!res.ok) throw new Error('更新失败');
-  const json = await res.json();
-  return json.data;
+  const { data: result, error } = await supabase
+    .from(TASKS_TABLE)
+    .update(data)
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw new Error(error.message);
+  return rowToTask(result);
 }
 
 async function apiDeleteTask(id) {
-  const res = await fetch(API_BASE + '/' + id, { method: 'DELETE' });
-  if (!res.ok) throw new Error('删除失败');
+  const { error } = await supabase
+    .from(TASKS_TABLE)
+    .delete()
+    .eq('id', id);
+  if (error) throw new Error(error.message);
+}
+
+// ==================== REALTIME SYNC ====================
+let realtimeChannel = null;
+
+function setupRealtime() {
+  if (realtimeChannel) realtimeChannel.unsubscribe();
+  realtimeChannel = supabase
+    .channel('tasks-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: TASKS_TABLE }, payload => {
+      // Reload tasks on any change from server
+      if (!document.hidden) loadTasksSilent();
+    })
+    .subscribe();
+}
+
+async function loadTasksSilent() {
+  try {
+    const loaded = await apiGetTasks();
+    tasks = loaded;
+    renderAll();
+  } catch {}
 }
 
 // ==================== CONNECTION STATUS ====================
@@ -1069,6 +1230,14 @@ function setConnection(status) {
   dot.className = 'connection-dot ' + status;
   text.textContent = { online: '已连接', offline: '已断开', loading: '连接中...' }[status];
 }
+
+// ==================== GLOBAL STATE ====================
+let tasks = [];
+let editingId = null;
+let currentView = 'overview';
+let weekOffset = 0;
+let monthOffset = 0;
+let dayViewDate = null;
 
 // ==================== TOAST ====================
 function showToast(msg, type) {
@@ -1083,6 +1252,7 @@ async function loadTasks() {
   try {
     tasks = await apiGetTasks();
     setConnection('online');
+    hideLogin();
     return true;
   } catch (err) {
     setConnection('offline');
@@ -1090,6 +1260,50 @@ async function loadTasks() {
     return false;
   }
 }
+
+// ==================== LOGIN ====================
+function showLogin() {
+  const overlay = document.getElementById('loginOverlay');
+  if (overlay) {
+    overlay.classList.remove('hidden');
+    const input = document.getElementById('loginKeyInput');
+    if (input) { input.value = ''; input.focus(); }
+  }
+}
+
+function hideLogin() {
+  const overlay = document.getElementById('loginOverlay');
+  if (overlay) overlay.classList.add('hidden');
+}
+
+async function doLogin() {
+  const input = document.getElementById('loginKeyInput');
+  const btn = document.getElementById('loginBtn');
+  const err = document.getElementById('loginError');
+  const key = input.value.trim();
+  if (!key) { err.textContent = '请输入密钥'; return; }
+  btn.disabled = true;
+  err.textContent = '登录中...';
+  try {
+    await apiLogin(key);
+    err.textContent = '';
+    hideLogin();
+    loadTasks();
+  } catch (e) {
+    err.textContent = e.message || '登录失败，请重试';
+    input.value = '';
+    input.focus();
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// Login: button click
+document.getElementById('loginBtn').addEventListener('click', doLogin);
+// Login: enter key
+document.getElementById('loginKeyInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
 
 async function doSaveTask() {
   const title = document.getElementById('taskTitle').value.trim();
@@ -1603,7 +1817,7 @@ function renderInbox() {
         </div>
       </div>
       <div class="inbox-item-actions">
-        <button class="inbox-btn assign-date" onclick="assignInboxDate('${t.id}')" title="分配日期">📅</button>
+        <button class="inbox-btn assign-date" onclick="assignInboxDate('${t.id}', event)" title="分配日期">📅</button>
         <button class="inbox-btn" onclick="editTask('${t.id}')" title="编辑">✎</button>
         <button class="inbox-btn del" onclick="doDeleteTask('${t.id}')" title="删除">✕</button>
       </div>
@@ -1630,15 +1844,18 @@ function inboxQuickAdd() {
   }).catch(e => showToast(e.message, 'error'));
 }
 
-function assignInboxDate(id) {
+function assignInboxDate(id, e) {
   const task = tasks.find(t => t.id === id);
   if (!task) return;
-  // Show a small inline date picker
   const dateInput = document.createElement('input');
   dateInput.type = 'date';
-  dateInput.style.cssText = 'position:fixed;z-index:999;left:-9999px;top:-9999px;';
+  const btn = e.currentTarget || e.target;
+  const rect = btn.getBoundingClientRect();
+  dateInput.style.cssText = `position:fixed;z-index:999;top:${rect.bottom + 2}px;left:${rect.left}px;opacity:0;pointer-events:none;`;
   document.body.appendChild(dateInput);
-  dateInput.showPicker ? dateInput.showPicker() : dateInput.click();
+  requestAnimationFrame(() => {
+    dateInput.showPicker ? dateInput.showPicker() : dateInput.click();
+  });
   dateInput.addEventListener('change', async () => {
     if (dateInput.value) {
       try {
@@ -2064,7 +2281,10 @@ function toggleSidebar() {
   sidebar.classList.toggle('collapsed', sidebarCollapsed);
   // Update toggle button icon
   const toggle = sidebar.querySelector('.sidebar-toggle');
-  toggle.textContent = sidebarCollapsed ? '▶' : '◀';
+  toggle.textContent = '☰';
+  // Sync bottom bar
+  const bottomBar = document.getElementById('bottomBar');
+  if (bottomBar) bottomBar.style.left = sidebarCollapsed ? '0' : '240px';
   // Save preference
   localStorage.setItem('task-sidebar-collapsed', sidebarCollapsed ? '1' : '0');
 }
@@ -2074,6 +2294,10 @@ function closeMobileSidebar() {
   const sidebar = document.getElementById('sidebar');
   sidebar.classList.add('collapsed');
   document.getElementById('sidebarOverlay').classList.remove('show');
+  sidebarCollapsed = true;
+  localStorage.setItem('task-sidebar-collapsed', '1');
+  const bb = document.getElementById('bottomBar');
+  if (bb) bb.style.left = '0';
 }
 
 function toggleSidebarSection(id) {
@@ -2131,6 +2355,9 @@ function switchView(view) {
   document.querySelectorAll('.sidebar-nav-item').forEach(item => item.classList.remove('active'));
   const sideItem = document.querySelector(`.sidebar-nav-item[data-view="${view}"]`);
   if (sideItem) sideItem.classList.add('active');
+  // Show tag filter only on overview page
+  const tagSection = document.getElementById('sidebarTagSection');
+  tagSection.style.display = view === 'overview' ? '' : 'none';
   // Update view visibility
   document.querySelectorAll('.view').forEach(v => {
     v.classList.add('abs-hide');
@@ -2236,8 +2463,11 @@ renderKanban = function() {
   if (localStorage.getItem('task-sidebar-collapsed') === '1') {
     sidebarCollapsed = true;
     document.getElementById('sidebar').classList.add('collapsed');
-    document.querySelector('.sidebar-toggle').textContent = '▶';
+    document.querySelector('.sidebar-toggle').textContent = '☰';
   }
+  // Sync bottom bar with sidebar state
+  const bb = document.getElementById('bottomBar');
+  if (bb) bb.style.left = sidebarCollapsed ? '0' : '240px';
   // Restore collapsible section states
   ['sidebarTagSection'].forEach(id => {
     if (localStorage.getItem('task-section-' + id) === '1') {
@@ -2245,11 +2475,15 @@ renderKanban = function() {
     }
   });
   // Mobile: floating toggle opens overlay
-  const floatToggle = document.querySelector('.sidebar-float-toggle');
+  const floatToggle = document.getElementById('sidebarFloatToggle');
   floatToggle.addEventListener('click', () => {
     if (window.innerWidth <= 768) {
       document.getElementById('sidebar').classList.remove('collapsed');
       document.getElementById('sidebarOverlay').classList.add('show');
+      sidebarCollapsed = false;
+      localStorage.setItem('task-sidebar-collapsed', '0');
+      const bb = document.getElementById('bottomBar');
+      if (bb) bb.style.left = '0'; // mobile: bottom bar stays full width
     } else {
       toggleSidebar();
     }
@@ -2258,13 +2492,37 @@ renderKanban = function() {
   // Init archive label state
   const archiveCb = document.getElementById('archiveToggle');
   if (archiveCb && !archiveCb.checked) document.getElementById('archiveLabel').classList.add('off');
+
+  // Check existing auth session
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) {
+    sessionUser = session.user;
+  }
+
+  // Register Service Worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+
   setConnection('loading');
   const ok = await loadTasks();
   if (!ok) {
-    showToast('无法连接服务器，请确认服务已启动', 'error');
+    if (!isLoggedIn()) {
+      showLogin();
+    } else {
+      showToast('数据加载失败，请检查网络', 'error');
+    }
+  } else {
+    // Setup realtime sync after successful load
+    setupRealtime();
   }
   renderAll();
 })();
+
+// Auto-refresh when tab becomes visible
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && isLoggedIn()) loadTasksSilent();
+});
 </script>
 </body>
 </html>

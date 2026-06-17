@@ -1,0 +1,23 @@
+{
+  "name": "任务管理器",
+  "short_name": "任务",
+  "description": "任务管理器 - 月/周/日视图 + 看板拖拽",
+  "start_url": "/task-manager/",
+  "scope": "/task-manager/",
+  "display": "standalone",
+  "background_color": "#f0f2f5",
+  "theme_color": "#4A90D9",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
