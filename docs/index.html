@@ -961,6 +961,10 @@ body {
         <option value="low">低</option>
       </select>
       <span class="inbox-count" id="inboxCount"></span>
+      <label class="filter-toggle" id="inboxArchiveLabel" onclick="toggleInboxArchive()" title="隐藏已完成任务">
+        <input type="checkbox" id="inboxArchiveToggle" onchange="renderInbox()">
+        <span class="filter-toggle-text">📁 归档</span>
+      </label>
     </div>
     <div class="inbox-list" id="inboxList"></div>
   </div>
@@ -1822,6 +1826,9 @@ function renderInbox() {
   let inboxTasks = tasks.filter(t => !t.date).sort((a, b) => (a.order || 0) - (b.order || 0));
   if (filter !== 'all') inboxTasks = inboxTasks.filter(t => t.status === filter);
   if (priority !== 'all') inboxTasks = inboxTasks.filter(t => t.priority === priority);
+  // 归档开关：隐藏已完成
+  const archiveDone = document.getElementById('inboxArchiveToggle')?.checked;
+  if (archiveDone && filter !== 'done') inboxTasks = inboxTasks.filter(t => t.status !== 'done');
   if (search) inboxTasks = inboxTasks.filter(t =>
     t.title.toLowerCase().includes(search) ||
     (t.desc||'').toLowerCase().includes(search)
@@ -1878,6 +1885,14 @@ function inboxQuickAdd() {
     renderAll();
     showToast('已添加到收件箱', 'success');
   }).catch(e => showToast(e.message, 'error'));
+}
+
+function toggleInboxArchive() {
+  const cb = document.getElementById('inboxArchiveToggle');
+  cb.checked = !cb.checked;
+  document.getElementById('inboxArchiveLabel').classList.toggle('off', !cb.checked);
+  localStorage.setItem('task-inbox-archive', cb.checked ? '1' : '0');
+  renderInbox();
 }
 
 function assignInboxDate(id, e) {
@@ -2628,6 +2643,17 @@ renderKanban = function() {
   // Init archive label state
   const archiveCb = document.getElementById('archiveToggle');
   if (archiveCb && !archiveCb.checked) document.getElementById('archiveLabel').classList.add('off');
+
+  // Init inbox archive state
+  const inboxArcCb = document.getElementById('inboxArchiveToggle');
+  if (inboxArcCb) {
+    const inboxArcState = localStorage.getItem('task-inbox-archive');
+    if (inboxArcState === '1') {
+      inboxArcCb.checked = true;
+    } else {
+      document.getElementById('inboxArchiveLabel').classList.add('off');
+    }
+  }
 
   // Register Service Worker
   if ('serviceWorker' in navigator) {
