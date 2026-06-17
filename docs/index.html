@@ -45,7 +45,7 @@ body {
   font-size: 1rem; background: transparent; color: #888; transition: all .15s;
 }
 .sidebar-toggle:hover { background: #f0f5ff; color: #4A90D9; }
-.sidebar-body { flex: 1; overflow-y: auto; padding: 0.5rem 0; }
+.sidebar-body { flex: 1; overflow-y: auto; padding: 0.5rem 0; min-height: 0; display: flex; flex-direction: column; }
 
 /* Sidebar Nav Items */
 .sidebar-nav { display: flex; flex-direction: column; gap: 0.125rem; padding: 0 0.75rem; }
@@ -987,15 +987,15 @@ body {
         <div class="sidebar-tag-list" id="sidebarTagList"></div>
       </div>
     </div>
-  </div>
-  <!-- Sidebar Bottom Stats -->
-  <div class="sidebar-stats" id="sidebarStats">
-    <div class="sidebar-stat-row"><span>总任务</span><span class="val" id="sidebarStatTotal">0</span></div>
-    <div class="sidebar-stat-row"><span>已完成</span><span class="val" id="sidebarStatDone">0</span></div>
-    <div class="sidebar-stat-row"><span>进行中</span><span class="val" id="sidebarStatProgress">0</span></div>
-  </div>
-  <div style="padding:0.5rem 0.75rem;text-align:center;">
-    <button class="btn-ghost-tiny" onclick="doLogout()" title="退出登录">⏻</button>
+    <!-- Sidebar Bottom Stats -->
+    <div class="sidebar-stats" id="sidebarStats">
+      <div class="sidebar-stat-row"><span>总任务</span><span class="val" id="sidebarStatTotal">0</span></div>
+      <div class="sidebar-stat-row"><span>已完成</span><span class="val" id="sidebarStatDone">0</span></div>
+      <div class="sidebar-stat-row"><span>进行中</span><span class="val" id="sidebarStatProgress">0</span></div>
+    </div>
+    <div style="padding:0.5rem 0.75rem 0.75rem;text-align:center;">
+      <button class="btn-ghost-tiny" onclick="doLogout()" title="退出登录">⏻</button>
+    </div>
   </div>
 </div>
 
