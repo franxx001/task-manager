@@ -1070,7 +1070,7 @@ body {
 // ==================== SUPABASE INIT ====================
 const SUPABASE_URL = 'https://bbcwbuutltmodlkldezf.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJiY3didXV0bHRtb2Rsa2xkZXpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2NzAzNDAsImV4cCI6MjA5NzI0NjM0MH0.hmXOvHFevOKTFy-_bNV9z8a0Mage9qUOmaFl9-_L9yc';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ==================== AUTH ====================
 let sessionUser = null;
@@ -1092,15 +1092,15 @@ async function apiLogin(key) {
   const email = await keyToEmail(key);
   console.log('apiLogin: derived email', email);
   // Try sign in first
-  let { data, error } = await supabase.auth.signInWithPassword({ email, password: key });
+  let { data, error } = await sb.auth.signInWithPassword({ email, password: key });
   if (error) {
     console.log('apiLogin: signIn failed, trying signUp', error.message);
     // User doesn't exist yet — sign up
-    const result = await supabase.auth.signUp({ email, password: key });
+    const result = await sb.auth.signUp({ email, password: key });
     if (result.error) throw new Error('注册失败: ' + result.error.message);
     console.log('apiLogin: signUp succeeded, signing in');
     // Sign in again after signup
-    const signin = await supabase.auth.signInWithPassword({ email, password: key });
+    const signin = await sb.auth.signInWithPassword({ email, password: key });
     if (signin.error) throw new Error(signin.error.message);
     data = signin.data;
   }
@@ -1110,7 +1110,7 @@ async function apiLogin(key) {
 }
 
 async function apiLogout() {
-  await supabase.auth.signOut();
+  await sb.auth.signOut();
   sessionUser = null;
   localStorage.removeItem('task-session');
 }
@@ -2499,7 +2499,7 @@ renderKanban = function() {
   if (archiveCb && !archiveCb.checked) document.getElementById('archiveLabel').classList.add('off');
 
   // Check existing auth session
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session } } = await sb.auth.getSession();
   if (session) {
     sessionUser = session.user;
   }
