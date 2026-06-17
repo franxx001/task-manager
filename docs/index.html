@@ -449,6 +449,10 @@ body {
 }
 .overview-table tr:not(:last-child) td { border-bottom: 1px solid #f0f0f0; }
 .overview-table tr:hover td { background: #fafbfc; }
+.overview-desc {
+  display: block; max-width: 300px; white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; color: #888; font-size: 12px; line-height: 1.4;
+}
 .status-badge {
   display: inline-block; padding: 2px 10px; border-radius: 10px;
   font-size: 11px; font-weight: 500;
@@ -1847,7 +1851,7 @@ function renderOverview() {
         ${filtered.map(t => `
           <tr>
             <td>${selectMode ? `<input type="checkbox" class="task-cb" data-id="${t.id}" onchange="onTaskCheck()" ${selectedIds.has(t.id)?'checked':''} style="cursor:pointer;">` : `<span class="cb-circle${t.status==='done'?' checked':''}" onclick="event.stopPropagation();toggleTaskStatus('${t.id}')" title="${t.status==='done'?'标记为待办':'标记为完成'}"></span>`}</td>
-            <td><span class="${t.status==='done'?'task-done':''}"><strong>${esc(t.title)}</strong>${subtaskProgress(t) ? `<span class="overview-subtask">(${subtaskProgress(t).done}/${subtaskProgress(t).total})</span>` : ''}${t.desc ? `<br><small style="color:#888">${esc(t.desc)}</small>` : ''}</span></td>
+            <td><span class="${t.status==='done'?'task-done':''}"><strong>${esc(t.title)}</strong>${subtaskProgress(t) ? `<span class="overview-subtask">(${subtaskProgress(t).done}/${subtaskProgress(t).total})</span>` : ''}${t.desc ? `<span class="overview-desc">${esc(t.desc)}</span>` : ''}</span></td>
             <td><span class="priority-tag ${t.priority}">${priorityLabel(t.priority)}</span></td>
             <td>${tagChipsHTML(t.tags || [])}</td>
             <td>${t.date || '-'}</td>
