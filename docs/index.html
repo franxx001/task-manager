@@ -467,16 +467,11 @@ body {
   padding: 0.5rem 0.875rem; margin-bottom: 0.75rem; flex-wrap: wrap;
 }
 .select-count { font-size: 0.8125rem; font-weight: 600; color: #4A90D9; }
-.select-bar .btn, .select-bar select, .select-bar input[type="date"] {
+.select-bar .btn, .select-bar select {
   padding: 0.25rem 0.625rem; font-size: 0.8125rem;
   border: none; border-radius: 0.25rem;
   background: transparent; color: #666;
   cursor: pointer; line-height: 1.5;
-}
-.select-bar input[type="date"] { width: 2.2rem; color: transparent; }
-.select-bar input[type="date"]::-webkit-calendar-picker-indicator {
-  position: absolute; left: 0; right: 0; top: 0; bottom: 0; margin: 0 auto;
-  width: 1.125rem; height: 1.125rem; cursor: pointer;
 }
 .select-bar .btn:hover, .select-bar select:hover { background: rgba(74,144,217,.1); color: #4A90D9; }
 .select-bar .btn-danger { color: #e04343; }
@@ -1077,7 +1072,7 @@ body {
       <input type="text" id="bulkTagInput" placeholder="标签，回车确认"
         style="display:none;width:8rem;outline:none;"
         onkeydown="if(event.key==='Enter')bulkAddTag()" onblur="hideBulkTagInput()">
-      <input type="date" id="bulkDateInput" onchange="bulkSetDate()" title="设置日期">
+      <button class="btn" onclick="bulkSetDate(event)" title="设置日期">📅</button>
       <button class="btn btn-danger" onclick="bulkDelete()">删除</button>
       <button class="btn btn-ghost" onclick="toggleSelectMode()">取消</button>
     </div>
@@ -2094,25 +2089,40 @@ async function bulkSetPriority() {
   showToast(`${ok} 个任务优先级已更新`, 'success');
 }
 
-async function bulkSetDate() {
-  const date = document.getElementById('bulkDateInput').value;
-  if (!date || selectedIds.size === 0) return;
-  let ok = 0;
-  for (const id of selectedIds) {
-    try {
-      await apiPatchTask(id, { date });
-      const t = tasks.find(t2 => t2.id === id);
-      if (t) t.date = date;
-      ok++;
-    } catch {}
-  }
-  document.getElementById('bulkDateInput').value = '';
-  selectedIds.clear();
-  selectMode = false;
-  document.getElementById('selectBar').style.display = 'none';
-  document.getElementById('btnSelectMode').textContent = '☐ 多选';
-  renderAll();
-  showToast(`${ok} 个任务日期已更新`, 'success');
+function bulkSetDate(e) {
+  if (selectedIds.size === 0) return;
+  const ids = [...selectedIds];
+  const inp = document.createElement('input');
+  inp.type = 'date';
+  const rect = e.currentTarget.getBoundingClientRect();
+  inp.style.cssText = `position:fixed;z-index:999;top:${rect.bottom + 2}px;left:${rect.left}px;opacity:0;pointer-events:none;`;
+  document.body.appendChild(inp);
+  requestAnimationFrame(() => {
+    inp.showPicker ? inp.showPicker() : inp.click();
+  });
+  inp.addEventListener('change', async () => {
+    const date = inp.value;
+    inp.remove();
+    if (!date) return;
+    let ok = 0;
+    for (const id of ids) {
+      try {
+        await apiPatchTask(id, { date });
+        const t = tasks.find(t2 => t2.id === id);
+        if (t) t.date = date;
+        ok++;
+      } catch {}
+    }
+    selectedIds.clear();
+    selectMode = false;
+    document.getElementById('selectBar').style.display = 'none';
+    document.getElementById('btnSelectMode').textContent = '☐ 多选';
+    renderAll();
+    showToast(`${ok} 个任务日期已更新`, 'success');
+  });
+  inp.addEventListener('blur', () => {
+    setTimeout(() => { if (document.body.contains(inp)) inp.remove(); }, 300);
+  });
 }
 
 function toggleArchive() {
