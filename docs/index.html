@@ -1289,6 +1289,23 @@ async function apiLogin(key) {
   return data.user;
 }
 
+async function ensureAuth() {
+  if (sessionUser) return sessionUser;
+  // Session lost — try to restore from Supabase
+  try {
+    const { data } = await sb.auth.getSession();
+    if (data?.session?.user) {
+      sessionUser = data.session.user;
+      return sessionUser;
+    }
+  } catch {}
+  // Session truly gone
+  sessionUser = null;
+  localStorage.removeItem('task-session');
+  showLogin();
+  throw new Error('会话已过期，请重新登录');
+}
+
 async function apiLogout() {
   await sb.auth.signOut();
   sessionUser = null;
@@ -1343,10 +1360,11 @@ async function apiGetTasks() {
 }
 
 async function apiCreateTask(data) {
+  await ensureAuth();
   const row = taskToRow(data);
   row.id = 't_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
   if (!row.order || row.order === 0) row.order = Date.now() % 2000000000;
-  if (sessionUser) row.user_id = sessionUser.id;
+  row.user_id = sessionUser.id;
   const { data: result, error } = await sb
     .from(TASKS_TABLE)
     .insert(row)
@@ -1357,6 +1375,7 @@ async function apiCreateTask(data) {
 }
 
 async function apiUpdateTask(id, data) {
+  await ensureAuth();
   const row = taskToRow(data);
   const { data: result, error } = await sb
     .from(TASKS_TABLE)
@@ -1369,6 +1388,7 @@ async function apiUpdateTask(id, data) {
 }
 
 async function apiPatchTask(id, data) {
+  await ensureAuth();
   if (!id) throw new Error('任务ID缺失');
   // 过滤掉 undefined 值，避免 Supabase 400
   const clean = {};
@@ -1386,6 +1406,7 @@ async function apiPatchTask(id, data) {
 }
 
 async function apiDeleteTask(id) {
+  await ensureAuth();
   const { error } = await sb
     .from(TASKS_TABLE)
     .delete()
