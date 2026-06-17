@@ -2193,6 +2193,7 @@ function showDropIndicator(body, insertPos) {
   }
 }
 
+// order 使用秒级时间戳，确保不超过 int4 范围 (max 2,147,483,647)
 function calcNewOrder(body, status, insertPos) {
   const cards = [...body.querySelectorAll('.task-card')];
   const statusCards = cards.map(c => {
@@ -2201,8 +2202,8 @@ function calcNewOrder(body, status, insertPos) {
   }).sort((a, b) => a - b);
 
   if (insertPos.pos === 'end') {
-    if (statusCards.length === 0) return Date.now();
-    return Math.max(...statusCards) + 1000;
+    if (statusCards.length === 0) return Math.floor(Date.now() / 1000);
+    return Math.max(...statusCards) + 100;
   }
 
   if (insertPos.beforeId && insertPos.afterId) {
@@ -2215,10 +2216,10 @@ function calcNewOrder(body, status, insertPos) {
     const after = tasks.find(t => t.id === insertPos.afterId);
     const afterOrder = after ? after.order || 0 : 0;
     const firstOrder = statusCards.length > 1 ? Math.min(...statusCards) : afterOrder;
-    return firstOrder - 1000;
+    return firstOrder - 100;
   }
 
-  return Date.now();
+  return Math.floor(Date.now() / 1000);
 }
 
 function setupKanbanDragDrop() {
