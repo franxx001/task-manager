@@ -7,7 +7,7 @@
 <title>任务管理器</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✅</text></svg>">
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
 <style>
 /* ========== Reset & Base ========== */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1088,13 +1088,17 @@ async function keyToEmail(key) {
 }
 
 async function apiLogin(key) {
+  console.log('apiLogin: starting with key length', key.length);
   const email = await keyToEmail(key);
+  console.log('apiLogin: derived email', email);
   // Try sign in first
   let { data, error } = await supabase.auth.signInWithPassword({ email, password: key });
   if (error) {
+    console.log('apiLogin: signIn failed, trying signUp', error.message);
     // User doesn't exist yet — sign up
     const result = await supabase.auth.signUp({ email, password: key });
-    if (result.error) throw new Error(result.error.message);
+    if (result.error) throw new Error('注册失败: ' + result.error.message);
+    console.log('apiLogin: signUp succeeded, signing in');
     // Sign in again after signup
     const signin = await supabase.auth.signInWithPassword({ email, password: key });
     if (signin.error) throw new Error(signin.error.message);
@@ -1277,6 +1281,7 @@ function hideLogin() {
 }
 
 async function doLogin() {
+  console.log('doLogin: button clicked');
   const input = document.getElementById('loginKeyInput');
   const btn = document.getElementById('loginBtn');
   const err = document.getElementById('loginError');
