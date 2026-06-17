@@ -1792,6 +1792,13 @@ function taskCardHTML(task) {
 
 function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function priorityLabel(p) { return {high:'高',medium:'中',low:'低'}[p] || p; }
+const PRIO_SORT = { high: 0, medium: 1, low: 2 };
+function sortByPriority(a, b) {
+  const pa = PRIO_SORT[a.priority] ?? 1;
+  const pb = PRIO_SORT[b.priority] ?? 1;
+  if (pa !== pb) return pa - pb;
+  return (a.order || 0) - (b.order || 0);
+}
 function statusLabel(s) { return {todo:'待办',done:'已完成'}[s] || s; }
 function recurrenceLabel(r) {
   if (!r || !r.type) return '';
@@ -2563,7 +2570,7 @@ function renderWeek() {
     const ds = fmt(d);
     const isToday = ds === today;
     const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-    const dayTasks = tasks.filter(t => t.date === ds);
+    const dayTasks = tasks.filter(t => t.date === ds).sort(sortByPriority);
     return `
       <div class="week-day${isToday?' today':''}" data-date="${ds}">
         <div class="week-day-header" onclick="openDayView('${ds}')" title="点击查看当日看板">
@@ -2641,7 +2648,7 @@ function renderMonth() {
   for (let d = 1; d <= totalDays; d++) {
     const ds = `${year}-${String(month + 1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const isToday = ds === today;
-    const dayTasks = tasks.filter(t => t.date === ds);
+    const dayTasks = tasks.filter(t => t.date === ds).sort(sortByPriority);
 
     const maxItems = window.innerWidth < 500 ? 2 : 5;
     const items = dayTasks.slice(0, maxItems);
