@@ -1094,23 +1094,14 @@ async function keyToEmail(key) {
   return hex.substring(0, 16) + '@tm.local';
 }
 
+// 个人使用固定密钥，不开放注册
+const FIXED_KEY = 'b6d29a46df6ee1f02a7f6f78b3f814dbb2e1e4f9';
+
 async function apiLogin(key) {
-  console.log('apiLogin: starting with key length', key.length);
+  if (key !== FIXED_KEY) throw new Error('密钥错误');
   const email = await keyToEmail(key);
-  console.log('apiLogin: derived email', email);
-  // Try sign in first
-  let { data, error } = await sb.auth.signInWithPassword({ email, password: key });
-  if (error) {
-    console.log('apiLogin: signIn failed, trying signUp', error.message);
-    // User doesn't exist yet — sign up
-    const result = await sb.auth.signUp({ email, password: key });
-    if (result.error) throw new Error('注册失败: ' + result.error.message);
-    console.log('apiLogin: signUp succeeded, signing in');
-    // Sign in again after signup
-    const signin = await sb.auth.signInWithPassword({ email, password: key });
-    if (signin.error) throw new Error(signin.error.message);
-    data = signin.data;
-  }
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: key });
+  if (error) throw new Error(error.message);
   sessionUser = data.user;
   localStorage.setItem('task-session', '1');
   return data.user;
@@ -1194,14 +1185,20 @@ async function apiUpdateTask(id, data) {
 }
 
 async function apiPatchTask(id, data) {
-  const { data: result, error } = await sb
+  if (!id) throw new Error('任务ID缺失');
+  // 过滤掉 undefined 值，避免 Supabase 400
+  const clean = {};
+  for (const [k, v] of Object.entries(data)) {
+    if (v !== undefined) clean[k] = v;
+  }
+  const { error } = await sb
     .from(TASKS_TABLE)
-    .update(data)
-    .eq('id', id)
-    .select()
-    .single();
-  if (error) throw new Error(error.message);
-  return rowToTask(result);
+    .update(clean)
+    .eq('id', id);
+  if (error) {
+    console.error('apiPatchTask error:', error.message, 'details:', error.details, 'hint:', error.hint, 'code:', error.code);
+    throw new Error(error.message);
+  }
 }
 
 async function apiDeleteTask(id) {
@@ -1281,12 +1278,8 @@ async function loadTasks() {
 
 // ==================== LOGIN ====================
 function showLogin() {
-  const overlay = document.getElementById('loginOverlay');
-  if (overlay) {
-    overlay.classList.remove('hidden');
-    const input = document.getElementById('loginKeyInput');
-    if (input) { input.value = ''; input.focus(); }
-  }
+  // 个人使用：直接用固定密钥自动登录，不展示输入界面
+  doLogin();
 }
 
 function hideLogin() {
@@ -1294,26 +1287,36 @@ function hideLogin() {
   if (overlay) overlay.classList.add('hidden');
 }
 
+let loginInProgress = false;
 async function doLogin() {
-  console.log('doLogin: button clicked');
-  const input = document.getElementById('loginKeyInput');
-  const btn = document.getElementById('loginBtn');
+  if (loginInProgress) return;
+  loginInProgress = true;
   const err = document.getElementById('loginError');
-  const key = input.value.trim();
-  if (!key) { err.textContent = '请输入密钥'; return; }
-  btn.disabled = true;
-  err.textContent = '登录中...';
+  const overlay = document.getElementById('loginOverlay');
+  if (overlay) {
+    overlay.classList.remove('hidden');
+    document.getElementById('loginKeyInput').style.display = 'none';
+    document.getElementById('loginBtn').style.display = 'none';
+    if (err) err.textContent = '自动登录中...';
+  }
   try {
-    await apiLogin(key);
-    err.textContent = '';
+    await apiLogin(FIXED_KEY);
+    if (err) err.textContent = '';
     hideLogin();
-    loadTasks();
+    setConnection('loading');
+    await loadTasks();
+    setupRealtime();
+    renderAll();
   } catch (e) {
-    err.textContent = e.message || '登录失败，请重试';
-    input.value = '';
-    input.focus();
+    if (err) err.textContent = '登录失败: ' + (e.message || '未知错误');
+    const input = document.getElementById('loginKeyInput');
+    const btn = document.getElementById('loginBtn');
+    if (input) { input.style.display = ''; input.value = FIXED_KEY; input.focus(); }
+    if (btn) btn.style.display = '';
+    setConnection('offline');
+    renderAll();
   } finally {
-    btn.disabled = false;
+    loginInProgress = false;
   }
 }
 
@@ -2254,13 +2257,15 @@ function setupKanbanDragDrop() {
         if (subs && subs.length > 0 && subs.some(s => s.done !== (newStatus === 'done'))) {
           patchData.subtasks = subs.map(s => ({ ...s, done: newStatus === 'done' }));
         }
+        console.log('kanban drop: apiPatchTask', taskId, patchData);
         await apiPatchTask(taskId, patchData);
       } else if (task.order !== newOrder) {
+        console.log('kanban drop reorder: apiPatchTask', taskId, { order: newOrder });
         await apiPatchTask(taskId, { order: newOrder });
       }
       await loadTasks();
       renderAll();
-    } catch { showToast('操作失败', 'error'); }
+    } catch (e) { console.error('kanban drop failed:', e); showToast('操作失败', 'error'); }
   });
 
   // Clear indicator when leaving kanban entirely
@@ -2512,6 +2517,11 @@ renderKanban = function() {
   const archiveCb = document.getElementById('archiveToggle');
   if (archiveCb && !archiveCb.checked) document.getElementById('archiveLabel').classList.add('off');
 
+  // Register Service Worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+
   // Check existing auth session
   console.log('init: checking session');
   let session = null;
@@ -2525,32 +2535,20 @@ renderKanban = function() {
   if (session) {
     sessionUser = session.user;
     console.log('init: user set', sessionUser.email);
-  }
-
-  // Register Service Worker
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
-  }
-
-  if (!session) {
-    setConnection('offline');
-    showLogin();
+    hideLogin();
+    setConnection('loading');
+    const ok = await loadTasks();
+    if (ok) {
+      setupRealtime();
+    } else if (!isLoggedIn()) {
+      showLogin();
+    }
     renderAll();
     return;
   }
 
-  setConnection('loading');
-  const ok = await loadTasks();
-  if (!ok) {
-    if (!isLoggedIn()) {
-      showLogin();
-    }
-    // loadTasks() already shows specific error toast (e.g. RLS), skip generic one
-  } else {
-    // Setup realtime sync after successful load
-    setupRealtime();
-  }
-  renderAll();
+  // No existing session — auto-login
+  showLogin();
 })();
 
 // Auto-refresh when tab becomes visible
