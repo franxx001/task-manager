@@ -921,11 +921,15 @@ body {
   .task-card-desc-inline { display: none; }
   .task-card-meta { font-size: 0.6875rem; }
 
-  /* Modal: full screen */
-  .modal { width: 100%; max-width: 100%; border-radius: 0; }
-  .modal-overlay.show { padding: 0; }
-  .modal-body { padding: 1rem; }
-  .form-actions { flex-wrap: wrap; gap: 0.5rem; }
+  /* Modal: full screen, scrollable body */
+  .modal {
+    width: 100%; max-width: 100%; max-height: 100vh; max-height: 100dvh;
+    border-radius: 0; display: flex; flex-direction: column;
+  }
+  .modal-overlay.show { padding: 0; align-items: stretch; }
+  .modal h3 { flex-shrink: 0; padding-left: 0.75rem; padding-right: 0.75rem; }
+  .modal-body { padding: 0.5rem 1rem; overflow-y: auto; flex: 1; min-height: 0; -webkit-overflow-scrolling: touch; }
+  .form-actions { flex-wrap: wrap; gap: 0.5rem; padding: 0.75rem 1rem; flex-shrink: 0; }
   .form-actions .btn { flex: 1; min-width: 0; }
 
   /* Bottom bar: compact */
@@ -1194,6 +1198,7 @@ body {
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal" id="modal">
     <h3 id="modalTitle">新建任务</h3>
+    <div class="modal-body">
     <div class="form-group">
       <label>任务标题</label>
       <input type="text" id="taskTitle" placeholder="输入任务标题">
@@ -1258,6 +1263,7 @@ body {
           <input type="date" id="taskRecurrenceDate" style="display:none;flex:1;padding:0.375rem 0.625rem;border:0.0625rem solid #d9d9d9;border-radius:0.375rem;font-size:0.8125rem;">
         </div>
       </div>
+    </div>
     </div>
     <div class="form-actions">
       <button class="btn btn-ghost" onclick="closeModal()">取消</button>
