@@ -1,6 +1,2 @@
 node_modules/
 data/
-server.js
-mcp-server.js
-package.json
-package-lock.json
