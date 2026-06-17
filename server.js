@@ -61,7 +61,7 @@ if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
 // JSON body parser must come before auth middleware
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'docs')));
 
 // Auth middleware - protect /api/ routes except /api/auth/
 app.use('/api', (req, res, next) => {
