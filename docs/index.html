@@ -857,10 +857,10 @@ body {
   .month-task-text { font-size: 0.625rem; }
 }
 @media (max-width: 480px) {
-  .month-day { padding: 0.125rem; min-height: 4.6875rem; }
-  .month-day-num { font-size: 0.625rem; }
-  .month-task-text { font-size: 0.5625rem; }
-  .month-dot { width: 0.25rem; height: 0.25rem; }
+  .month-day { padding: 0.125rem; min-height: 3rem; }
+  .month-day-num { font-size: 0.6875rem; }
+  .month-task-text { font-size: 0.625rem; }
+  .month-dot { width: 0.3125rem; height: 0.3125rem; }
 }
 
 /* ========== MOBILE (≤48rem) ========== */
@@ -881,23 +881,26 @@ body {
   /* Main area */
   .main { padding: 0.75rem 0.75rem calc(5rem + env(safe-area-inset-bottom, 0px)); overflow-y: auto; }
 
-  /* Week grid: horizontal scroll */
+  /* Week grid: horizontal scroll - wider days */
   .week-grid {
-    display: flex; height: auto; gap: 0.375rem;
+    display: flex; height: auto; gap: 0.5rem;
     overflow-x: auto; scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
   }
   .week-day {
-    min-width: 8.125rem; flex-shrink: 0; scroll-snap-align: start;
+    min-width: 11rem; flex-shrink: 0; scroll-snap-align: start;
     height: auto; max-height: 60vh;
   }
   .week-day-body { flex: 1; }
+  .week-day .task-card { font-size: 0.8125rem !important; padding: 0.5rem 0.625rem !important; }
+  .week-day .task-card-title { font-size: 0.8125rem !important; }
 
-  /* Month: responsive grid */
-  .month-calendar { gap: 0.125rem; font-size: 0.6875rem; }
-  .month-day { padding: 0.1875rem; min-height: 2.5rem; }
-  .month-day-num { font-size: 0.6875rem; margin-bottom: 0.0625rem; }
-  .month-task-text { font-size: 0.625rem; }
+  /* Month: bigger cells */
+  .month-calendar { gap: 0.1875rem; font-size: 0.75rem; }
+  .month-day { padding: 0.25rem; min-height: 3.5rem; }
+  .month-day-num { font-size: 0.75rem; margin-bottom: 0.125rem; }
+  .month-task-text { font-size: 0.6875rem; }
+  .month-dot { width: 0.375rem; height: 0.375rem; }
 
   /* Overview: scrollable table */
   #overviewTableWrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
