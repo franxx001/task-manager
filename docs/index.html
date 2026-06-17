@@ -98,7 +98,7 @@ body {
 }
 
 /* Sidebar Stats */
-.sidebar-stats { padding: 0.75rem; border-top: 0.0625rem solid #f0f0f0; margin-top: auto; }
+.sidebar-stats { padding: 0.75rem; margin-top: 0; }
 .sidebar-stat-row {
   display: flex; justify-content: space-between; align-items: center;
   padding: 0.25rem 0; font-size: 0.75rem; color: #888;
@@ -987,14 +987,15 @@ body {
         <div class="sidebar-tag-list" id="sidebarTagList"></div>
       </div>
     </div>
-    <!-- Sidebar Bottom Stats -->
-    <div class="sidebar-stats" id="sidebarStats">
-      <div class="sidebar-stat-row"><span>总任务</span><span class="val" id="sidebarStatTotal">0</span></div>
-      <div class="sidebar-stat-row"><span>已完成</span><span class="val" id="sidebarStatDone">0</span></div>
-      <div class="sidebar-stat-row"><span>进行中</span><span class="val" id="sidebarStatProgress">0</span></div>
-    </div>
-    <div style="padding:0.5rem 0.75rem 0.75rem;text-align:center;">
-      <button class="btn-ghost-tiny" onclick="doLogout()" title="退出登录">⏻</button>
+    <div style="margin-top:auto;border-top:0.0625rem solid #f0f0f0;">
+      <div class="sidebar-stats" id="sidebarStats">
+        <div class="sidebar-stat-row"><span>总任务</span><span class="val" id="sidebarStatTotal">0</span></div>
+        <div class="sidebar-stat-row"><span>已完成</span><span class="val" id="sidebarStatDone">0</span></div>
+        <div class="sidebar-stat-row"><span>进行中</span><span class="val" id="sidebarStatProgress">0</span></div>
+      </div>
+      <div style="padding:0.5rem 0.75rem 0.75rem;text-align:center;">
+        <button class="btn-ghost-tiny" onclick="doLogout()" title="退出登录">⏻</button>
+      </div>
     </div>
   </div>
 </div>
