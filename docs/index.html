@@ -394,7 +394,7 @@ body {
   display: flex; align-items: center; justify-content: space-between;
   margin-bottom: 1rem;
 }
-.month-header h2 { font-size: 1.125rem; font-weight: 600; }
+.month-header h2 { font-size: 1.125rem; font-weight: 600; white-space: nowrap; }
 .month-header .nav-btns { display: flex; gap: 0.5rem; }
 .month-calendar {
   display: grid; grid-template-columns: repeat(7, 1fr);
@@ -2472,10 +2472,15 @@ function renderWeek() {
     const day = String(d.getDate()).padStart(2,'0');
     return `${y}-${m}-${day}`;
   };
+  const fmtShort = d => {
+    const m = String(d.getMonth()+1).padStart(2,'0');
+    const day = String(d.getDate()).padStart(2,'0');
+    return `${m}-${day}`;
+  };
   const today = todayStr();
 
   document.getElementById('weekTitle').textContent =
-    `${fmt(days[0])} — ${fmt(days[6])}`;
+    `${fmtShort(days[0])} — ${fmtShort(days[6])}`;
 
   const grid = document.getElementById('weekGrid');
   grid.innerHTML = days.map(d => {
