@@ -709,8 +709,12 @@ body {
 .inbox-item-body { flex: 1; min-width: 0; }
 .inbox-item-title {
   font-size: 0.875rem; font-weight: 500; margin-bottom: 0.125rem;
+  display: flex; align-items: center; gap: 0.5rem;
 }
 .inbox-item-title.done { text-decoration: line-through; color: #aaa; }
+.inbox-title-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.inbox-tags { display: flex; gap: 0.25rem; flex-shrink: 0; }
+.inbox-tags .tag-chip { font-size: 0.625rem; padding: 0.0625rem 0.3125rem; }
 .inbox-item-desc {
   font-size: 0.75rem; color: #888; overflow: hidden;
   text-overflow: ellipsis; white-space: nowrap;
@@ -2266,12 +2270,12 @@ function renderInbox() {
       <span class="cb-circle${t.status === 'done' ? ' checked' : ''}"
             onclick="toggleTaskStatus('${t.id}')" title="${t.status === 'done' ? '标记待办' : '标记完成'}"></span>
       <div class="inbox-item-body">
-        <div class="inbox-item-title${t.status === 'done' ? ' done' : ''}">${esc(t.title)}${subtaskProgress(t) ? ` <span style="font-size:0.6875rem;color:#888">(${subtaskProgress(t).done}/${subtaskProgress(t).total})</span>` : ''}</div>
-        ${t.desc ? `<div class="inbox-item-desc">${esc(t.desc)}</div>` : ''}
-        <div class="inbox-item-meta">
+        <div class="inbox-item-title${t.status === 'done' ? ' done' : ''}">
           <span class="priority-tag ${t.priority}">${priorityLabel(t.priority)}</span>
-          ${tagChipsHTML(t.tags || [])}
+          <span class="inbox-title-text">${esc(t.title)}${subtaskProgress(t) ? ` <span style="font-size:0.6875rem;color:#888">(${subtaskProgress(t).done}/${subtaskProgress(t).total})</span>` : ''}</span>
+          ${(t.tags||[]).length ? `<span class="inbox-tags">${tagChipsHTML(t.tags)}</span>` : ''}
         </div>
+        ${t.desc ? `<div class="inbox-item-desc">${esc(t.desc)}</div>` : ''}
       </div>
       <div class="inbox-item-actions">
         <button class="inbox-btn assign-date" onclick="assignInboxDate('${t.id}', event)" title="分配日期">📅</button>
@@ -2314,13 +2318,13 @@ function renderArchive() {
       <span class="cb-circle checked"
             onclick="toggleTaskStatus('${t.id}')" title="标记待办"></span>
       <div class="inbox-item-body">
-        <div class="inbox-item-title">${esc(t.title)}${subtaskProgress(t) ? ` <span style="font-size:0.6875rem;color:#888;">(${subtaskProgress(t).done}/${subtaskProgress(t).total})</span>` : ''}</div>
-        ${t.desc ? `<div class="inbox-item-desc">${esc(t.desc)}</div>` : ''}
-        <div class="inbox-item-meta">
+        <div class="inbox-item-title">
           <span class="priority-tag ${t.priority}">${priorityLabel(t.priority)}</span>
-          ${tagChipsHTML(t.tags || [])}
-          ${t.date ? `<span style="font-size:0.75rem;color:#888;">📅 ${t.date}</span>` : ''}
+          <span class="inbox-title-text">${esc(t.title)}${subtaskProgress(t) ? ` <span style="font-size:0.6875rem;color:#888;">(${subtaskProgress(t).done}/${subtaskProgress(t).total})</span>` : ''}</span>
+          ${(t.tags||[]).length ? `<span class="inbox-tags">${tagChipsHTML(t.tags)}</span>` : ''}
+          ${t.date ? `<span style="font-size:0.75rem;color:#888;flex-shrink:0;">📅 ${t.date}</span>` : ''}
         </div>
+        ${t.desc ? `<div class="inbox-item-desc">${esc(t.desc)}</div>` : ''}
       </div>
       <div class="inbox-item-actions">
         <button class="inbox-btn" onclick="editTask('${t.id}')" title="编辑">✎</button>
