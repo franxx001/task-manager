@@ -2499,14 +2499,30 @@ renderKanban = function() {
   if (archiveCb && !archiveCb.checked) document.getElementById('archiveLabel').classList.add('off');
 
   // Check existing auth session
-  const { data: { session } } = await sb.auth.getSession();
+  console.log('init: checking session');
+  let session = null;
+  try {
+    const result = await sb.auth.getSession();
+    session = result.data?.session || null;
+    console.log('init: session result', session ? 'has session' : 'no session');
+  } catch (e) {
+    console.error('init: getSession error', e);
+  }
   if (session) {
     sessionUser = session.user;
+    console.log('init: user set', sessionUser.email);
   }
 
   // Register Service Worker
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+
+  if (!session) {
+    setConnection('offline');
+    showLogin();
+    renderAll();
+    return;
   }
 
   setConnection('loading');
