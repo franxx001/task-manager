@@ -1154,7 +1154,7 @@ function taskToRow(task) {
 }
 
 async function apiGetTasks() {
-  const { data, error } = await supabase
+  const { data, error } = await sb
     .from(TASKS_TABLE)
     .select('*')
     .order('order', { ascending: true });
@@ -1165,7 +1165,7 @@ async function apiGetTasks() {
 async function apiCreateTask(data) {
   const row = taskToRow(data);
   row.id = 't_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
-  const { data: result, error } = await supabase
+  const { data: result, error } = await sb
     .from(TASKS_TABLE)
     .insert(row)
     .select()
@@ -1176,7 +1176,7 @@ async function apiCreateTask(data) {
 
 async function apiUpdateTask(id, data) {
   const row = taskToRow(data);
-  const { data: result, error } = await supabase
+  const { data: result, error } = await sb
     .from(TASKS_TABLE)
     .update(row)
     .eq('id', id)
@@ -1187,7 +1187,7 @@ async function apiUpdateTask(id, data) {
 }
 
 async function apiPatchTask(id, data) {
-  const { data: result, error } = await supabase
+  const { data: result, error } = await sb
     .from(TASKS_TABLE)
     .update(data)
     .eq('id', id)
@@ -1198,7 +1198,7 @@ async function apiPatchTask(id, data) {
 }
 
 async function apiDeleteTask(id) {
-  const { error } = await supabase
+  const { error } = await sb
     .from(TASKS_TABLE)
     .delete()
     .eq('id', id);
@@ -1210,7 +1210,7 @@ let realtimeChannel = null;
 
 function setupRealtime() {
   if (realtimeChannel) realtimeChannel.unsubscribe();
-  realtimeChannel = supabase
+  realtimeChannel = sb
     .channel('tasks-changes')
     .on('postgres_changes', { event: '*', schema: 'public', table: TASKS_TABLE }, payload => {
       // Reload tasks on any change from server
