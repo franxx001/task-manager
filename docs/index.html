@@ -1484,22 +1484,28 @@ function subtaskInlineCardHTML(task) {
     </div>`;
 }
 
-async function toggleSubtaskInCard(taskId, index) {
+function toggleSubtaskInCard(taskId, index) {
   const task = tasks.find(t => t.id === taskId);
   if (!task || !task.subtasks || !task.subtasks[index]) return;
+  const oldStatus = task.status;
+
+  // 乐观更新：先改本地
+  task.subtasks[index].done = !task.subtasks[index].done;
   const subs = task.subtasks.map(s => ({ ...s }));
-  subs[index].done = !subs[index].done;
-  try {
-    const patchData = { subtasks: subs };
-    // Auto-complete parent: all subtasks done → parent done; any undone → parent todo
-    const allDone = subs.length > 0 && subs.every(s => s.done);
-    if (allDone !== (task.status === 'done')) {
-      patchData.status = allDone ? 'done' : 'todo';
-    }
-    await apiPatchTask(taskId, patchData);
-    await loadTasks();
-    renderAll();
-  } catch { showToast('操作失败', 'error'); }
+  const allDone = subs.length > 0 && subs.every(s => s.done);
+  if (allDone !== (oldStatus === 'done')) {
+    task.status = allDone ? 'done' : 'todo';
+  }
+  renderAll();
+
+  // 后台同步
+  const patchData = { subtasks: subs };
+  if (allDone !== (oldStatus === 'done')) {
+    patchData.status = allDone ? 'done' : 'todo';
+  }
+  apiPatchTask(taskId, patchData)
+    .then(() => loadTasksSilent())
+    .catch(e => { console.error('乐观同步失败:', e); showToast('数据同步失败，刷新页面可恢复', 'error'); });
 }
 
 // ==================== RENDER HELPERS ====================
@@ -1610,24 +1616,28 @@ function hideSuggestions() {
 }
 
 // ==================== TOGGLE STATUS ====================
-async function toggleTaskStatus(id) {
+function toggleTaskStatus(id) {
   const task = tasks.find(t => t.id === id);
   if (!task) return;
   const newStatus = task.status === 'done' ? 'todo' : 'done';
-  try {
-    const patchData = { status: newStatus };
-    // Cascade: parent done → all subtasks done; parent undone → all subtasks undone
-    const subs = task.subtasks;
-    if (subs && subs.length > 0) {
-      const needsUpdate = subs.some(s => s.done !== (newStatus === 'done'));
-      if (needsUpdate) {
-        patchData.subtasks = subs.map(s => ({ ...s, done: newStatus === 'done' }));
-      }
+
+  // 乐观更新：先改本地
+  task.status = newStatus;
+  const subs = task.subtasks;
+  let patchData = { status: newStatus };
+  if (subs && subs.length > 0) {
+    const needsUpdate = subs.some(s => s.done !== (newStatus === 'done'));
+    if (needsUpdate) {
+      subs.forEach(s => s.done = newStatus === 'done');
+      patchData.subtasks = subs.map(s => ({ ...s }));
     }
-    await apiPatchTask(id, patchData);
-    await loadTasks();
-    renderAll();
-  } catch { showToast('操作失败', 'error'); }
+  }
+  renderAll();
+
+  // 后台同步
+  apiPatchTask(id, patchData)
+    .then(() => loadTasksSilent())
+    .catch(e => { console.error('乐观同步失败:', e); showToast('数据同步失败，刷新页面可恢复', 'error'); });
 }
 
 // ==================== BULK SELECT ====================
@@ -2249,23 +2259,30 @@ function setupKanbanDragDrop() {
     const newOrder = calcNewOrder(body, newStatus, insertPos);
     const sourceStatus = task.status;
 
-    try {
-      if (sourceStatus !== newStatus) {
-        const patchData = { status: newStatus, order: newOrder };
-        // Cascade: drag to done → all subtasks done; drag to todo → all subtasks undone
-        const subs = task.subtasks;
-        if (subs && subs.length > 0 && subs.some(s => s.done !== (newStatus === 'done'))) {
-          patchData.subtasks = subs.map(s => ({ ...s, done: newStatus === 'done' }));
-        }
-        console.log('kanban drop: apiPatchTask', taskId, patchData);
-        await apiPatchTask(taskId, patchData);
-      } else if (task.order !== newOrder) {
-        console.log('kanban drop reorder: apiPatchTask', taskId, { order: newOrder });
-        await apiPatchTask(taskId, { order: newOrder });
+    // 乐观更新：先改本地数据，再后台同步
+    const subs = task.subtasks;
+    let patchData = {};
+    if (sourceStatus !== newStatus) {
+      patchData = { status: newStatus, order: newOrder };
+      if (subs && subs.length > 0 && subs.some(s => s.done !== (newStatus === 'done'))) {
+        patchData.subtasks = subs.map(s => ({ ...s, done: newStatus === 'done' }));
+        // 同步更新本地 subtask
+        task.subtasks = patchData.subtasks;
       }
-      await loadTasks();
+      task.status = newStatus;
+      task.order = newOrder;
+    } else if (task.order !== newOrder) {
+      patchData = { order: newOrder };
+      task.order = newOrder;
+    }
+
+    if (patchData.order !== undefined || patchData.status !== undefined || patchData.subtasks !== undefined) {
       renderAll();
-    } catch (e) { console.error('kanban drop failed:', e); showToast('操作失败', 'error'); }
+      // 后台发送 PATCH，不阻塞 UI
+      apiPatchTask(taskId, patchData)
+        .then(() => loadTasksSilent())
+        .catch(e => { console.error('乐观同步失败:', e); showToast('数据同步失败，刷新页面可恢复', 'error'); });
+    }
   });
 
   // Clear indicator when leaving kanban entirely
