@@ -1504,7 +1504,7 @@ function toggleSubtaskInCard(taskId, index) {
     patchData.status = allDone ? 'done' : 'todo';
   }
   apiPatchTask(taskId, patchData)
-    .then(() => loadTasksSilent())
+    .then(() => {})
     .catch(e => { console.error('乐观同步失败:', e); showToast('数据同步失败，刷新页面可恢复', 'error'); });
 }
 
@@ -1636,7 +1636,7 @@ function toggleTaskStatus(id) {
 
   // 后台同步
   apiPatchTask(id, patchData)
-    .then(() => loadTasksSilent())
+    .then(() => {})
     .catch(e => { console.error('乐观同步失败:', e); showToast('数据同步失败，刷新页面可恢复', 'error'); });
 }
 
@@ -1816,7 +1816,7 @@ function renderInbox() {
   const filter = document.getElementById('inboxFilter')?.value || 'all';
   const priority = document.getElementById('inboxPriority')?.value || 'all';
 
-  let inboxTasks = tasks.filter(t => !t.date);
+  let inboxTasks = tasks.filter(t => !t.date).sort((a, b) => (a.order || 0) - (b.order || 0));
   if (filter !== 'all') inboxTasks = inboxTasks.filter(t => t.status === filter);
   if (priority !== 'all') inboxTasks = inboxTasks.filter(t => t.priority === priority);
   if (search) inboxTasks = inboxTasks.filter(t =>
@@ -2281,7 +2281,7 @@ function setupKanbanDragDrop() {
       renderAll();
       // 后台发送 PATCH，不阻塞 UI
       apiPatchTask(taskId, patchData)
-        .then(() => loadTasksSilent())
+        .then(() => {})
         .catch(e => { console.error('乐观同步失败:', e); showToast('数据同步失败，刷新页面可恢复', 'error'); });
     }
   });
