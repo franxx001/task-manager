@@ -468,6 +468,17 @@ body {
 }
 .select-count { font-size: 0.8125rem; font-weight: 600; color: #4A90D9; }
 .select-bar .btn { padding: 0.25rem 0.75rem; font-size: 0.75rem; }
+.select-bar select {
+  font-size: 0.75rem; padding: 0.25rem 0.375rem;
+  border: 0.0625rem solid #b3d4ff; border-radius: 0.375rem;
+  background: #fff; color: #333; outline: none; cursor: pointer;
+}
+.select-bar .btn-danger { background: transparent; color: #e04343; border-color: transparent; }
+.select-bar .btn-danger:hover { background: rgba(255,77,79,.1); }
+.select-bar #bulkTagInput {
+  font-size: 0.75rem; padding: 0.25rem 0.375rem;
+  border: 0.0625rem solid #4A90D9; border-radius: 0.375rem;
+}
 .overview-stats {
   display: flex; gap: 1rem; margin-bottom: 1.25rem;
 }
@@ -1048,18 +1059,18 @@ body {
     </div>
     <div id="selectBar" class="select-bar" style="display:none;">
       <span class="select-count" id="selectCount">已选 0 项</span>
-      <select id="bulkPriority" onchange="bulkSetPriority()" style="font-size:0.75rem;padding:0.25rem 0.375rem;border:1px solid #ddd;border-radius:0.375rem;">
+      <select id="bulkPriority" onchange="bulkSetPriority()">
         <option value="">优先级...</option>
         <option value="high">高</option>
         <option value="medium">中</option>
         <option value="low">低</option>
       </select>
-      <button class="btn" id="bulkTagBtn" onclick="showBulkTagInput()" style="font-size:0.75rem;background:#f0f5ff;">+ 标签</button>
-      <input type="text" id="bulkTagInput" placeholder="输入标签，回车确认"
-        style="display:none;font-size:0.75rem;padding:0.25rem 0.375rem;border:1px solid #4A90D9;border-radius:0.375rem;width:8rem;outline:none;"
+      <button class="btn" id="bulkTagBtn" onclick="showBulkTagInput()">+ 标签</button>
+      <input type="text" id="bulkTagInput" placeholder="标签，回车确认"
+        style="display:none;width:8rem;outline:none;"
         onkeydown="if(event.key==='Enter')bulkAddTag()" onblur="hideBulkTagInput()">
-      <button class="btn btn-danger" onclick="bulkDelete()" style="font-size:0.75rem;">🗑 删除</button>
-      <button class="btn btn-ghost" onclick="toggleSelectMode()" style="font-size:0.75rem;">取消</button>
+      <button class="btn btn-danger" onclick="bulkDelete()">删除</button>
+      <button class="btn btn-ghost" onclick="toggleSelectMode()">取消</button>
     </div>
     <div class="overview-stats" id="overviewStats"></div>
     <div id="overviewTableWrap"></div>
