@@ -1109,14 +1109,10 @@ async function keyToEmail(key) {
   return hex.substring(0, 16) + '@tm.local';
 }
 
-// 个人使用固定密钥，不开放注册
-const FIXED_KEY = 'b6d29a46df6ee1f02a7f6f78b3f814dbb2e1e4f9';
-
 async function apiLogin(key) {
-  if (key !== FIXED_KEY) throw new Error('密钥错误');
   const email = await keyToEmail(key);
   const { data, error } = await sb.auth.signInWithPassword({ email, password: key });
-  if (error) throw new Error(error.message);
+  if (error) throw new Error('密钥错误');
   sessionUser = data.user;
   localStorage.setItem('task-session', '1');
   return data.user;
