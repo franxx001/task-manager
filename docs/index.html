@@ -467,7 +467,7 @@ body {
   padding: 0.5rem 0.875rem; margin-bottom: 0.75rem; flex-wrap: wrap;
 }
 .select-count { font-size: 0.8125rem; font-weight: 600; color: #4A90D9; }
-.select-bar .btn, .select-bar select {
+.select-bar .btn, .select-bar select, .select-bar input[type="date"] {
   padding: 0.25rem 0.625rem; font-size: 0.8125rem;
   border: none; border-radius: 0.25rem;
   background: transparent; color: #666;
@@ -480,6 +480,8 @@ body {
   font-size: 0.75rem; padding: 0.25rem 0.375rem;
   border: 0.0625rem solid #4A90D9; border-radius: 0.25rem; outline: none;
 }
+/* Multi-select checkboxes */
+.task-cb, #selectAllCB { width: 1.125rem; height: 1.125rem; cursor: pointer; accent-color: #4A90D9; }
 .overview-stats {
   display: flex; gap: 1rem; margin-bottom: 1.25rem;
 }
@@ -1070,6 +1072,7 @@ body {
       <input type="text" id="bulkTagInput" placeholder="标签，回车确认"
         style="display:none;width:8rem;outline:none;"
         onkeydown="if(event.key==='Enter')bulkAddTag()" onblur="hideBulkTagInput()">
+      <input type="date" id="bulkDateInput" onchange="bulkSetDate()">
       <button class="btn btn-danger" onclick="bulkDelete()">删除</button>
       <button class="btn btn-ghost" onclick="toggleSelectMode()">取消</button>
     </div>
@@ -2086,6 +2089,27 @@ async function bulkSetPriority() {
   showToast(`${ok} 个任务优先级已更新`, 'success');
 }
 
+async function bulkSetDate() {
+  const date = document.getElementById('bulkDateInput').value;
+  if (!date || selectedIds.size === 0) return;
+  let ok = 0;
+  for (const id of selectedIds) {
+    try {
+      await apiPatchTask(id, { date });
+      const t = tasks.find(t2 => t2.id === id);
+      if (t) t.date = date;
+      ok++;
+    } catch {}
+  }
+  document.getElementById('bulkDateInput').value = '';
+  selectedIds.clear();
+  selectMode = false;
+  document.getElementById('selectBar').style.display = 'none';
+  document.getElementById('btnSelectMode').textContent = '☐ 多选';
+  renderAll();
+  showToast(`${ok} 个任务日期已更新`, 'success');
+}
+
 function toggleArchive() {
   const cb = document.getElementById('archiveToggle');
   cb.checked = !cb.checked;
@@ -2173,7 +2197,7 @@ function renderOverview() {
     <table class="overview-table">
       <thead>
         <tr>
-          <th style="width:2.5rem;">${selectMode ? '<input type="checkbox" id="selectAllCB" onchange="toggleSelectAll()" style="cursor:pointer;">' : ''}</th>
+          <th style="width:2.5rem;">${selectMode ? '<input type="checkbox" id="selectAllCB" onchange="toggleSelectAll()">' : ''}</th>
           <th>任务</th>
           <th>优先级</th>
           <th>标签</th>
@@ -2184,7 +2208,7 @@ function renderOverview() {
       <tbody>
         ${filtered.map(t => `
           <tr>
-            <td>${selectMode ? `<input type="checkbox" class="task-cb" data-id="${t.id}" onchange="onTaskCheck()" ${selectedIds.has(t.id)?'checked':''} style="cursor:pointer;">` : `<span class="cb-circle${t.status==='done'?' checked':''}" onclick="event.stopPropagation();toggleTaskStatus('${t.id}')" title="${t.status==='done'?'标记为待办':'标记为完成'}"></span>`}</td>
+            <td>${selectMode ? `<input type="checkbox" class="task-cb" data-id="${t.id}" onchange="onTaskCheck()" ${selectedIds.has(t.id)?'checked':''}>` : `<span class="cb-circle${t.status==='done'?' checked':''}" onclick="event.stopPropagation();toggleTaskStatus('${t.id}')" title="${t.status==='done'?'标记为待办':'标记为完成'}"></span>`}</td>
             <td><span class="${t.status==='done'?'task-done':''}"><strong>${esc(t.title)}</strong>${subtaskProgress(t) ? `<span class="overview-subtask">(${subtaskProgress(t).done}/${subtaskProgress(t).total})</span>` : ''}${t.desc ? `<span class="overview-desc">${esc(t.desc)}</span>` : ''}</span></td>
             <td><span class="priority-tag ${t.priority}">${priorityLabel(t.priority)}</span></td>
             <td>${tagChipsHTML(t.tags || [])}</td>
