@@ -827,7 +827,7 @@ body {
         <span class="nav-badge" id="navBadgeInbox">0</span>
       </button>
       <button class="sidebar-nav-item" data-view="archive">
-        <span class="nav-icon">📁</span> 归档
+        <span class="nav-icon">🗑️</span> 归档
         <span class="nav-badge" id="navBadgeArchive">0</span>
       </button>
     </div>
@@ -2421,14 +2421,39 @@ function setupInboxDragDrop() {
     const targetTask = tasks.find(t => t.id === targetId);
     if (!targetTask) return;
 
-    // Calculate new order (int4-safe, 步长50避免浮点)
+    // Calculate new order — 取前后相邻项的中间值，整数安全
     const insertBefore = e.clientY < mid;
-    let newOrder;
+    const items = [...list.querySelectorAll('.inbox-item')];
+    const targetIdx = items.findIndex(it => it.dataset.id === targetId);
+    let prevOrder, nextOrder;
+
     if (insertBefore) {
-      newOrder = (targetTask.order || 0) - 50;
+      prevOrder = targetIdx > 0 ? (tasks.find(t => t.id === items[targetIdx-1].dataset.id)?.order || 0) : 0;
+      nextOrder = targetTask.order || 0;
     } else {
-      newOrder = (targetTask.order || 0) + 50;
+      prevOrder = targetTask.order || 0;
+      nextOrder = targetIdx < items.length - 1 ? (tasks.find(t => t.id === items[targetIdx+1].dataset.id)?.order || 0) : (prevOrder + 1000000);
     }
+
+    // 空间不足时重新平衡所有 item 的 order
+    if (nextOrder - prevOrder <= 1) {
+      items.forEach((it, i) => {
+        const t = tasks.find(tk => tk.id === it.dataset.id);
+        if (t) t.order = (i + 1) * 1000;
+      });
+      // 重新计算
+      const newItems = [...list.querySelectorAll('.inbox-item')];
+      const newIdx = newItems.findIndex(it => it.dataset.id === targetId);
+      if (insertBefore) {
+        prevOrder = newIdx > 0 ? (tasks.find(t => t.id === newItems[newIdx-1].dataset.id)?.order || 0) : 0;
+        nextOrder = targetTask.order || 0;
+      } else {
+        prevOrder = targetTask.order || 0;
+        nextOrder = newIdx < newItems.length - 1 ? (tasks.find(t => t.id === newItems[newIdx+1].dataset.id)?.order || 0) : (prevOrder + 1000000);
+      }
+    }
+
+    const newOrder = Math.floor((prevOrder + nextOrder) / 2);
 
     // Optimistic update
     task.order = newOrder;
