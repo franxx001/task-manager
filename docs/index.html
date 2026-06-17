@@ -281,12 +281,23 @@ body {
 .task-card.priority-medium { border-left-color: #faad14; }
 .task-card.priority-low { border-left-color: #52c41a; }
 .task-card.dragging { opacity: .5; transform: scale(.96); }
-.task-card-title { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
+/* 标题行：标签+标题水平排列 */
+.task-card-title-line {
+  display: flex; align-items: flex-start; gap: 6px; margin-bottom: 4px;
+  min-height: 20px;
+}
+.task-card-tags { flex-shrink: 0; line-height: 1.4; }
+.task-card-tags .tag-chip { font-size: 11px; padding: 1px 6px; }
+.task-card-title { font-size: 14px; font-weight: 500; line-height: 1.4; min-width: 0; }
 .task-card-desc { font-size: 13px; color: #888; margin-bottom: 6px;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.task-card-meta { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #aaa; }
+/* 子任务限制最多显示4行 */
+.subtask-card-list { max-height: 72px; overflow: hidden; }
+.task-card-meta { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #aaa;
+  margin-top: 4px;
+}
 .task-card-actions { position: absolute; top: 8px; right: 8px; display: none; gap: 4px; }
 .task-card:hover .task-card-actions { display: flex; }
 .task-card-actions button {
@@ -1543,16 +1554,19 @@ function toggleSubtaskInCard(taskId, index) {
 // ==================== RENDER HELPERS ====================
 function taskCardHTML(task) {
   const cls = `task-card priority-${task.priority}`;
+  const tags = task.tags || [];
   return `
     <div class="${cls}" draggable="true" data-id="${task.id}" data-status="${task.status}">
       <div class="task-card-actions">
         <button onclick="event.stopPropagation(); editTask('${task.id}')" title="编辑">✎</button>
         <button class="del" onclick="event.stopPropagation(); doDeleteTask('${task.id}')" title="删除">✕</button>
-    </div>
-      <div class="task-card-title">${esc(task.title)}</div>
+      </div>
+      <div class="task-card-title-line">
+        ${tags.length ? `<span class="task-card-tags">${tagChipsHTML(tags)}</span>` : ''}
+        <span class="task-card-title">${esc(task.title)}</span>
+      </div>
       ${task.desc ? `<div class="task-card-desc">${esc(task.desc)}</div>` : ''}
       ${subtaskInlineCardHTML(task)}
-      ${(task.tags||[]).length ? `<div style="margin-bottom:4px;">${tagChipsHTML(task.tags)}</div>` : ''}
       <div class="task-card-meta">
         ${task.date ? `<span>📅 ${task.date}</span>` : ''}
         ${task.recurrence ? `<span title="${recurrenceLabel(task.recurrence)}">🔄</span>` : ''}
