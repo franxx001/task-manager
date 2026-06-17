@@ -467,7 +467,7 @@ body {
   padding: 0.5rem 0.875rem; margin-bottom: 0.75rem; flex-wrap: wrap;
 }
 .select-count { font-size: 0.8125rem; font-weight: 600; color: #4A90D9; }
-.select-bar .btn, .select-bar select, .select-bar input[type="date"] {
+.select-bar .btn, .select-bar select {
   padding: 0.25rem 0.625rem; font-size: 0.8125rem;
   border: none; border-radius: 0.25rem;
   background: transparent; color: #666;
@@ -1072,7 +1072,7 @@ body {
       <input type="text" id="bulkTagInput" placeholder="标签，回车确认"
         style="display:none;width:8rem;outline:none;"
         onkeydown="if(event.key==='Enter')bulkAddTag()" onblur="hideBulkTagInput()">
-      <input type="date" id="bulkDateInput" onchange="bulkSetDate()">
+      <button class="btn" onclick="showBulkDatePicker(event)" title="设置日期">📅</button>
       <button class="btn btn-danger" onclick="bulkDelete()">删除</button>
       <button class="btn btn-ghost" onclick="toggleSelectMode()">取消</button>
     </div>
@@ -2089,25 +2089,35 @@ async function bulkSetPriority() {
   showToast(`${ok} 个任务优先级已更新`, 'success');
 }
 
-async function bulkSetDate() {
-  const date = document.getElementById('bulkDateInput').value;
-  if (!date || selectedIds.size === 0) return;
-  let ok = 0;
-  for (const id of selectedIds) {
-    try {
-      await apiPatchTask(id, { date });
-      const t = tasks.find(t2 => t2.id === id);
-      if (t) t.date = date;
-      ok++;
-    } catch {}
-  }
-  document.getElementById('bulkDateInput').value = '';
-  selectedIds.clear();
-  selectMode = false;
-  document.getElementById('selectBar').style.display = 'none';
-  document.getElementById('btnSelectMode').textContent = '☐ 多选';
-  renderAll();
-  showToast(`${ok} 个任务日期已更新`, 'success');
+function showBulkDatePicker(e) {
+  if (selectedIds.size === 0) return;
+  const inp = document.createElement('input');
+  inp.type = 'date';
+  const rect = e.target.getBoundingClientRect();
+  inp.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.bottom + 4}px;opacity:0;`;
+  inp.onchange = async () => {
+    const date = inp.value;
+    inp.remove();
+    if (!date) return;
+    let ok = 0;
+    for (const id of selectedIds) {
+      try {
+        await apiPatchTask(id, { date });
+        const t = tasks.find(t2 => t2.id === id);
+        if (t) t.date = date;
+        ok++;
+      } catch {}
+    }
+    selectedIds.clear();
+    selectMode = false;
+    document.getElementById('selectBar').style.display = 'none';
+    document.getElementById('btnSelectMode').textContent = '☐ 多选';
+    renderAll();
+    showToast(`${ok} 个任务日期已更新`, 'success');
+  };
+  inp.onblur = () => setTimeout(() => { try { inp.remove(); } catch {} }, 200);
+  document.body.appendChild(inp);
+  inp.showPicker();
 }
 
 function toggleArchive() {
