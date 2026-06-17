@@ -1190,6 +1190,7 @@ async function apiGetTasks() {
 async function apiCreateTask(data) {
   const row = taskToRow(data);
   row.id = 't_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+  if (!row.order || row.order === 0) row.order = Date.now() % 2000000000;
   const { data: result, error } = await sb
     .from(TASKS_TABLE)
     .insert(row)
@@ -2421,7 +2422,7 @@ function setupInboxDragDrop() {
     const targetTask = tasks.find(t => t.id === targetId);
     if (!targetTask) return;
 
-    // Calculate new order — 取前后相邻项的中间值，整数安全
+    // 纯 midpoint 算法，float8 精度永不重平衡
     const insertBefore = e.clientY < mid;
     const items = [...list.querySelectorAll('.inbox-item')];
     const targetIdx = items.findIndex(it => it.dataset.id === targetId);
@@ -2435,25 +2436,7 @@ function setupInboxDragDrop() {
       nextOrder = targetIdx < items.length - 1 ? (tasks.find(t => t.id === items[targetIdx+1].dataset.id)?.order || 0) : (prevOrder + 1000000);
     }
 
-    // 空间不足时重新平衡所有 item 的 order
-    if (nextOrder - prevOrder <= 1) {
-      items.forEach((it, i) => {
-        const t = tasks.find(tk => tk.id === it.dataset.id);
-        if (t) t.order = (i + 1) * 1000;
-      });
-      // 重新计算
-      const newItems = [...list.querySelectorAll('.inbox-item')];
-      const newIdx = newItems.findIndex(it => it.dataset.id === targetId);
-      if (insertBefore) {
-        prevOrder = newIdx > 0 ? (tasks.find(t => t.id === newItems[newIdx-1].dataset.id)?.order || 0) : 0;
-        nextOrder = targetTask.order || 0;
-      } else {
-        prevOrder = targetTask.order || 0;
-        nextOrder = newIdx < newItems.length - 1 ? (tasks.find(t => t.id === newItems[newIdx+1].dataset.id)?.order || 0) : (prevOrder + 1000000);
-      }
-    }
-
-    const newOrder = Math.floor((prevOrder + nextOrder) / 2);
+    const newOrder = (prevOrder + nextOrder) / 2;
 
     // Optimistic update
     task.order = newOrder;
