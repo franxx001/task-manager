@@ -195,6 +195,12 @@ body {
 .btn-danger:hover { background: #fff1f0; }
 .btn-ghost { background: transparent; color: #666; }
 .btn-ghost:hover { background: #f5f5f5; }
+.btn-ghost-tiny {
+  background: transparent; border: none; cursor: pointer; color: #ccc;
+  font-size: 14px; padding: 4px 8px; border-radius: 4px; line-height: 1;
+  transition: color .15s;
+}
+.btn-ghost-tiny:hover { color: #ff4d4f; }
 
 /* ========== Nav Tabs ========== */
 .nav-tabs {
@@ -839,6 +845,9 @@ body {
     <div class="sidebar-stat-row"><span>已完成</span><span class="val" id="sidebarStatDone">0</span></div>
     <div class="sidebar-stat-row"><span>进行中</span><span class="val" id="sidebarStatProgress">0</span></div>
   </div>
+  <div style="padding:8px 12px;text-align:center;">
+    <button class="btn-ghost-tiny" onclick="doLogout()" title="退出登录">⏻</button>
+  </div>
 </div>
 
 <!-- Floating toggle (visible when sidebar collapsed) -->
@@ -1328,6 +1337,14 @@ document.getElementById('loginBtn').addEventListener('click', doLogin);
 document.getElementById('loginKeyInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') doLogin();
 });
+
+async function doLogout() {
+  await apiLogout();
+  tasks = [];
+  renderAll();
+  setConnection('offline');
+  showLogin();
+}
 
 async function doSaveTask() {
   const title = document.getElementById('taskTitle').value.trim();
