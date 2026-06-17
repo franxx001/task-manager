@@ -1070,7 +1070,14 @@ body {
 // ==================== SUPABASE INIT ====================
 const SUPABASE_URL = 'https://bbcwbuutltmodlkldezf.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJiY3didXV0bHRtb2Rsa2xkZXpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2NzAzNDAsImV4cCI6MjA5NzI0NjM0MH0.hmXOvHFevOKTFy-_bNV9z8a0Mage9qUOmaFl9-_L9yc';
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    persistSession: true,
+    storage: window.localStorage,
+    autoRefreshToken: true,
+    detectSessionInUrl: false,
+  },
+});
 
 // ==================== AUTH ====================
 let sessionUser = null;
@@ -1259,8 +1266,15 @@ async function loadTasks() {
     hideLogin();
     return true;
   } catch (err) {
-    setConnection('offline');
-    console.error('加载失败:', err);
+    const msg = err.message || '';
+    if (msg.includes('permission denied') || msg.includes('403') || msg.includes('JWT')) {
+      setConnection('offline');
+      console.error('加载失败(RLS权限):', msg);
+      showToast('Supabase 表权限未配置，请执行: ALTER TABLE tasks DISABLE ROW LEVEL SECURITY;', 'error');
+    } else {
+      setConnection('offline');
+      console.error('加载失败:', err);
+    }
     return false;
   }
 }
@@ -2530,9 +2544,8 @@ renderKanban = function() {
   if (!ok) {
     if (!isLoggedIn()) {
       showLogin();
-    } else {
-      showToast('数据加载失败，请检查网络', 'error');
     }
+    // loadTasks() already shows specific error toast (e.g. RLS), skip generic one
   } else {
     // Setup realtime sync after successful load
     setupRealtime();
