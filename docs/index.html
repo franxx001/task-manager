@@ -1284,8 +1284,12 @@ async function loadTasks() {
 
 // ==================== LOGIN ====================
 function showLogin() {
-  // 个人使用：直接用固定密钥自动登录，不展示输入界面
-  doLogin();
+  const overlay = document.getElementById('loginOverlay');
+  if (overlay) {
+    overlay.classList.remove('hidden');
+    const input = document.getElementById('loginKeyInput');
+    if (input) { input.value = ''; input.focus(); }
+  }
 }
 
 function hideLogin() {
@@ -1293,36 +1297,28 @@ function hideLogin() {
   if (overlay) overlay.classList.add('hidden');
 }
 
-let loginInProgress = false;
 async function doLogin() {
-  if (loginInProgress) return;
-  loginInProgress = true;
+  const input = document.getElementById('loginKeyInput');
+  const btn = document.getElementById('loginBtn');
   const err = document.getElementById('loginError');
-  const overlay = document.getElementById('loginOverlay');
-  if (overlay) {
-    overlay.classList.remove('hidden');
-    document.getElementById('loginKeyInput').style.display = 'none';
-    document.getElementById('loginBtn').style.display = 'none';
-    if (err) err.textContent = '自动登录中...';
-  }
+  const key = input.value.trim();
+  if (!key) { err.textContent = '请输入密钥'; return; }
+  btn.disabled = true;
+  err.textContent = '登录中...';
   try {
-    await apiLogin(FIXED_KEY);
-    if (err) err.textContent = '';
+    await apiLogin(key);
+    err.textContent = '';
     hideLogin();
     setConnection('loading');
     await loadTasks();
     setupRealtime();
     renderAll();
   } catch (e) {
-    if (err) err.textContent = '登录失败: ' + (e.message || '未知错误');
-    const input = document.getElementById('loginKeyInput');
-    const btn = document.getElementById('loginBtn');
-    if (input) { input.style.display = ''; input.value = FIXED_KEY; input.focus(); }
-    if (btn) btn.style.display = '';
-    setConnection('offline');
-    renderAll();
+    err.textContent = e.message || '登录失败，请重试';
+    input.value = '';
+    input.focus();
   } finally {
-    loginInProgress = false;
+    btn.disabled = false;
   }
 }
 
@@ -2663,23 +2659,21 @@ renderKanban = function() {
   } catch (e) {
     console.error('init: getSession error', e);
   }
-  if (session) {
-    sessionUser = session.user;
-    console.log('init: user set', sessionUser.email);
-    hideLogin();
-    setConnection('loading');
-    const ok = await loadTasks();
-    if (ok) {
-      setupRealtime();
-    } else if (!isLoggedIn()) {
-      showLogin();
-    }
+  // No existing session — show login
+  if (!session) {
+    setConnection('offline');
+    showLogin();
     renderAll();
     return;
   }
 
-  // No existing session — auto-login
-  showLogin();
+  // Has session — load data
+  sessionUser = session.user;
+  hideLogin();
+  setConnection('loading');
+  const ok = await loadTasks();
+  if (ok) setupRealtime();
+  renderAll();
 })();
 
 // Auto-refresh when tab becomes visible
