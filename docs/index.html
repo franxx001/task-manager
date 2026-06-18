@@ -2807,7 +2807,7 @@ function renderMonth() {
     const dayTasks = tasks.filter(t => t.date === ds).sort(sortByPriority);
 
     const total = dayTasks.length;
-    const maxItems = window.innerWidth < 500 ? 3 : 4;
+    const maxItems = 4;
     const visible = dayTasks.slice(0, maxItems);
     const hidden = dayTasks.length - maxItems;
 
