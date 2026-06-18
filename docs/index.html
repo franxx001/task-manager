@@ -2818,7 +2818,7 @@ function renderMonth() {
         return `<div class="month-card"><span class="month-priority-bar ${pcls}"></span><span class="month-card-text${t.status === 'done' ? ' done' : ''}">${esc(t.title)}</span></div>`;
       }).join('');
       if (hidden > 0) {
-        itemsHTML += `<div class="month-day-more">+${hidden} 更多</div>`;
+        itemsHTML += `<div class="month-day-more">+${hidden}</div>`;
       }
     }
 
