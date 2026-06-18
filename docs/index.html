@@ -997,7 +997,7 @@ main.main-content { flex: 1; padding: 1.25rem 1.5rem 6.25rem; overflow: hidden; 
 .help-tooltip {
   display: none; position: absolute; top: 2rem; right: 0;
   background: #333; color: #fff; font-size: 0.75rem; line-height: 1.6;
-  padding: 0.5rem 0.75rem; border-radius: 0.375rem; white-space: nowrap;
+  padding: 0.5rem 0.75rem; border-radius: 0.375rem;
   z-index: 200; box-shadow: 0 0.25rem 0.75rem rgba(0,0,0,.2); font-weight: 400;
 }
 .help-tooltip.show { display: block; }
@@ -1096,7 +1096,7 @@ main.main-content { flex: 1; padding: 1.25rem 1.5rem 6.25rem; overflow: hidden; 
   <div class="header-right">
     <button class="btn btn-primary" onclick="openAddModal()">+ 新建任务</button>
     <span class="help-icon" id="helpIcon" title="快捷键/自然语言帮助" onclick="toggleHelpTooltip(event)">?
-      <span class="help-tooltip" id="helpTooltip"><kbd>N</kbd> 新建 <kbd>T</kbd> 今天 <kbd>/</kbd> 搜索 &nbsp;·&nbsp; 标题框支持自然语言：「明天买牛奶 #生活 高优先级」</span>
+      <span class="help-tooltip" id="helpTooltip"><kbd>N</kbd> 新建 <kbd>T</kbd> 今天 <kbd>/</kbd> 搜索<br>标题框支持自然语言：「明天买牛奶 #生活 高优先级」</span>
     </span>
   </div>
 </div>
