@@ -360,34 +360,83 @@ main.main-content { flex: 1; padding: 1.25rem 1.5rem 6.25rem; overflow: hidden; 
 .task-card-actions button:hover { background: #f5f5f5; color: #333; }
 .task-card-actions button.del:hover { color: #ff4d4f; background: #fff1f0; }
 
-/* ========== Week View ========== */
-.week-grid {
-  display: grid; grid-template-columns: repeat(7, 1fr);
-  gap: 0.625rem; height: calc(100vh - 13.75rem);
+/* ========== Agenda View (Week) ========== */
+.agenda-list {
+  display: flex; flex-direction: column; gap: 0.25rem;
+  height: calc(100vh - 13.75rem); overflow-y: auto;
 }
-.week-day {
-  background: #f7f8fa; border-radius: 0.625rem; display: flex; flex-direction: column;
+.agenda-day-group {
+  border-radius: 0.625rem; overflow: hidden;
 }
-.week-day.today { box-shadow: 0 0 0 0.125rem #4A90D9; }
-.week-day-header {
-  padding: 0.625rem 0.75rem; text-align: center; font-size: 0.75rem; color: #888;
-  font-weight: 500; border-bottom: 0.0625rem solid #e8e8e8; cursor: pointer;
-  transition: background 0.15s;
+.agenda-day-header {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.5rem 0.75rem; font-size: 0.8125rem; font-weight: 600; color: #555;
+  background: #f2f3f7; border-radius: 0.5rem 0.5rem 0 0; cursor: pointer;
+  transition: background 0.15s; user-select: none;
 }
-.week-day-header:hover { background: #f0f5ff; }
-.week-day-header .day-num {
-  font-size: 1.375rem; font-weight: 700; color: #1a1a2e; display: block;
+.agenda-day-header:hover { background: #e6ecf8; color: #4A90D9; }
+.agenda-day-header.today { background: #e6f0ff; color: #4A90D9; font-weight: 700; }
+.agenda-day-header .agenda-date-badge {
+  background: #fff; border-radius: 0.375rem; padding: 0.125rem 0.5rem;
+  font-size: 0.75rem; font-weight: 700; color: #1a1a2e; min-width: 2rem; text-align: center;
 }
-.week-day-header .day-num.weekend { color: #ff4d4f; }
-.week-day.today .week-day-header .day-num { color: #4A90D9; }
-.week-day-body {
-  flex: 1; padding: 0.5rem; overflow-y: auto;
-  display: flex; flex-direction: column; gap: 0.375rem;
-  min-height: 5rem;
+.agenda-day-header.today .agenda-date-badge { background: #4A90D9; color: #fff; }
+.agenda-day-header .agenda-day-name { font-size: 0.75rem; color: #888; }
+.agenda-day-header .agenda-day-count {
+  margin-left: auto; font-size: 0.6875rem; color: #bbb;
 }
-.week-day-body.drag-over { background: #e6f0ff; border-radius: 0.5rem; }
-.week-day .task-card { font-size: 0.75rem; padding: 0.5rem 0.625rem; }
-.week-day .task-card-title { font-size: 0.75rem; }
+.agenda-day-header.weekend { color: #ff4d4f; }
+.agenda-day-header.weekend .agenda-date-badge { color: #ff4d4f; }
+.agenda-day-header.weekend.today .agenda-date-badge { color: #fff; }
+
+.agenda-day-body {
+  background: #fff; border: 0.0625rem solid #e8e8e8; border-top: none;
+  border-radius: 0 0 0.5rem 0.5rem; min-height: 0.25rem;
+}
+.agenda-day-body.drag-over { background: #e6f0ff; box-shadow: inset 0 0 0 0.125rem #4A90D9; }
+.agenda-day-body:not(:last-child) { border-radius: 0 0 0.25rem 0.25rem; }
+
+.agenda-item {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.4375rem 0.625rem 0.4375rem 0.5rem; border-bottom: 0.0625rem solid #f0f0f0;
+  cursor: pointer; transition: background 0.12s;
+}
+.agenda-item:last-child { border-bottom: none; }
+.agenda-item:hover { background: #fafbfc; }
+.agenda-item:active { cursor: grabbing; }
+.agenda-item.dragging { opacity: 0.4; background: #f0f5ff; }
+.agenda-item.done { opacity: 0.55; }
+
+.agenda-check {
+  flex-shrink: 0; width: 1.125rem; height: 1.125rem; cursor: pointer;
+  appearance: none; -webkit-appearance: none; margin: 0;
+  border: 0.125rem solid #c8c8c8; border-radius: 50%; background: #fff;
+  transition: all 0.15s; position: relative; outline: none;
+}
+.agenda-check:hover { border-color: #52c41a; }
+.agenda-check:checked {
+  border-color: #52c41a; background: #52c41a;
+  box-shadow: inset 0 0 0 0.1875rem #fff, inset 0 0 0 0.5625rem #52c41a;
+}
+
+.agenda-priority-dot {
+  width: 0.5rem; height: 0.5rem; border-radius: 50%; flex-shrink: 0;
+  background: #d9d9d9; margin-left: 0.0625rem;
+}
+.agenda-priority-dot.high { background: #ff4d4f; }
+.agenda-priority-dot.medium { background: #faad14; }
+.agenda-priority-dot.low { background: #52c41a; }
+
+.agenda-item-title {
+  flex: 1; font-size: 0.875rem; font-weight: 500; color: #1a1a2e;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
+}
+.agenda-item.done .agenda-item-title { text-decoration: line-through; color: #aaa; }
+
+.agenda-item-tags { display: flex; gap: 0.25rem; flex-shrink: 0; max-width: 40%; overflow: hidden; }
+.agenda-item-tags .tag-chip { font-size: 0.6875rem; padding: 0.0625rem 0.375rem; margin: 0; }
+
+.agenda-empty { text-align: center; color: #bbb; padding: 3rem 1rem; font-size: 0.875rem; }
 
 /* ========== Month View ========== */
 .month-header {
@@ -844,7 +893,7 @@ main.main-content { flex: 1; padding: 1.25rem 1.5rem 6.25rem; overflow: hidden; 
   .task-card-actions button { width: 1.75rem; height: 1.75rem; font-size: 0.875rem; }
 }
 @media (max-width: 768px) {
-  .week-grid { grid-template-columns: repeat(7, 1fr); gap: 0.125rem; font-size: 0.625rem; }
+  .agenda-list { height: auto; max-height: calc(100vh - 15rem); }
   .month-calendar { gap: 0.125rem; }
   .month-day { padding: 0.1875rem; min-height: 5.625rem; }
   .month-day-num { font-size: 0.6875rem; }
@@ -875,19 +924,12 @@ main.main-content { flex: 1; padding: 1.25rem 1.5rem 6.25rem; overflow: hidden; 
   /* Main area */
   main.main-content { padding: 0.75rem 0.75rem calc(5rem + env(safe-area-inset-bottom, 0px)); overflow-y: auto; }
 
-  /* Week grid: horizontal scroll - wider days */
-  .week-grid {
-    display: flex; height: auto; gap: 0.5rem;
-    overflow-x: auto; scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
-  }
-  .week-day {
-    min-width: 11rem; flex-shrink: 0; scroll-snap-align: start;
-    height: auto; max-height: 60vh;
-  }
-  .week-day-body { flex: 1; }
-  .week-day .task-card { font-size: 0.8125rem !important; padding: 0.5rem 0.625rem !important; }
-  .week-day .task-card-title { font-size: 0.8125rem !important; }
+  /* Agenda: full-width list, larger touch targets */
+  .agenda-item { padding: 0.625rem 0.75rem; gap: 0.5rem; }
+  .agenda-check { width: 1.25rem; height: 1.25rem; }
+  .agenda-item-title { font-size: 0.9375rem; }
+  .agenda-item-tags .tag-chip { font-size: 0.75rem; padding: 0.125rem 0.5rem; }
+  .agenda-day-header { padding: 0.625rem 0.75rem; font-size: 0.875rem; }
 
   /* Month: bigger cells */
   .month-calendar { gap: 0.1875rem; font-size: 0.75rem; }
@@ -1121,7 +1163,7 @@ main.main-content { flex: 1; padding: 1.25rem 1.5rem 6.25rem; overflow: hidden; 
     <div class="today-list" id="todayList"></div>
   </div>
 
-  <!-- Week View -->
+  <!-- Week / Agenda View -->
   <div class="view abs-hide" id="view-week">
     <div class="month-header">
       <h2 id="weekTitle"></h2>
@@ -1131,7 +1173,7 @@ main.main-content { flex: 1; padding: 1.25rem 1.5rem 6.25rem; overflow: hidden; 
         <button class="btn btn-ghost" onclick="navigateWeek(1)">下周 →</button>
       </div>
     </div>
-    <div class="week-grid" id="weekGrid"></div>
+    <div class="agenda-list" id="agendaList"></div>
   </div>
 
   <!-- Month View -->
@@ -2624,41 +2666,77 @@ function renderWeek() {
     return `${m}-${day}`;
   };
   const today = todayStr();
+  const weekNames = ['周一','周二','周三','周四','周五','周六','周日'];
 
   document.getElementById('weekTitle').textContent =
     `${fmtShort(days[0])} — ${fmtShort(days[6])}`;
 
-  const grid = document.getElementById('weekGrid');
-  grid.innerHTML = days.map(d => {
+  const list = document.getElementById('agendaList');
+  const dayTasksMap = {};
+  days.forEach(d => {
+    const ds = fmt(d);
+    dayTasksMap[ds] = { date: d, ds, tasks: tasks.filter(t => t.date === ds).sort(sortByPriority) };
+  });
+
+  let html = '';
+  days.forEach((d, idx) => {
     const ds = fmt(d);
     const isToday = ds === today;
-    const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-    const dayTasks = tasks.filter(t => t.date === ds).sort(sortByPriority);
-    return `
-      <div class="week-day${isToday?' today':''}" data-date="${ds}">
-        <div class="week-day-header" onclick="openDayView('${ds}')" title="点击查看当日看板">
-          <span>${['一','二','三','四','五','六','日'][d.getDay()===0?6:d.getDay()-1]}</span>
-          <span class="day-num${isWeekend?' weekend':''}">${d.getDate()}</span>
-        </div>
-        <div class="week-day-body" data-date="${ds}">
-          ${dayTasks.length
-            ? dayTasks.map(t => `
-              <div class="task-card priority-${t.priority}" draggable="true" data-id="${t.id}" data-status="${t.status}" style="padding:0.375rem 0.5rem;font-size:0.75rem;">
-                <div class="task-card-title" style="font-size:0.75rem;${t.status==='done'?'text-decoration:line-through;color:#aaa;':''}">${esc(t.title)}</div>
-              </div>`).join('')
-            : ''}
-        </div>
-      </div>`;
-  }).join('');
+    const isWeekend = idx >= 5;
+    const group = dayTasksMap[ds];
+    const dayTasks = group.tasks;
 
-  setupWeekDragDrop();
+    html += `<div class="agenda-day-group" data-date="${ds}">
+      <div class="agenda-day-header${isToday?' today':''}${isWeekend?' weekend':''}" onclick="openDayView('${ds}')" title="点击跳转日视图">
+        <span class="agenda-date-badge">${d.getDate()}</span>
+        <span class="agenda-day-name">${weekNames[idx]}</span>
+        <span class="agenda-day-count">${dayTasks.length ? dayTasks.length + '项' : ''}</span>
+      </div>
+      <div class="agenda-day-body" data-date="${ds}">`;
+
+    if (!dayTasks.length) {
+      html += `<div class="agenda-item" style="justify-content:center;color:#ddd;cursor:default;font-size:0.75rem;">— 无任务 —</div>`;
+    } else {
+      dayTasks.forEach(t => {
+        const checked = t.status === 'done' ? ' checked' : '';
+        html += `<div class="agenda-item${t.status==='done'?' done':''}" draggable="true" data-id="${t.id}" data-status="${t.status}" onclick="editTask('${t.id}')" title="点击编辑任务">
+          <input type="checkbox" class="agenda-check"${checked} onclick="event.stopPropagation();toggleTaskStatus('${t.id}')" title="完成任务">
+          <span class="agenda-priority-dot ${t.priority||'medium'}"></span>
+          <span class="agenda-item-title">${esc(t.title)}</span>`;
+        if (t.tags && t.tags.length) {
+          html += `<span class="agenda-item-tags">${t.tags.map(tg => `<span class="tag-chip">${esc(tg)}</span>`).join('')}</span>`;
+        }
+        html += `</div>`;
+      });
+    }
+
+    html += `</div></div>`;
+  });
+
+  list.innerHTML = html;
+  setupAgendaDragDrop();
 }
 
-function setupWeekDragDrop() {
-  document.querySelectorAll('.week-day-body').forEach(body => {
+function setupAgendaDragDrop() {
+  // Drag start on agenda items
+  document.querySelectorAll('#agendaList .agenda-item[draggable]').forEach(item => {
+    item.addEventListener('dragstart', e => {
+      if (e.target.tagName === 'INPUT') { e.preventDefault(); return; }
+      e.dataTransfer.setData('text/plain', item.dataset.id);
+      item.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    item.addEventListener('dragend', e => {
+      item.classList.remove('dragging');
+    });
+  });
+
+  // Drop targets: day bodies
+  document.querySelectorAll('#agendaList .agenda-day-body').forEach(body => {
     body.addEventListener('dragover', e => {
       e.preventDefault();
       body.classList.add('drag-over');
+      e.dataTransfer.dropEffect = 'move';
     });
     body.addEventListener('dragleave', () => body.classList.remove('drag-over'));
     body.addEventListener('drop', async e => {
@@ -3209,6 +3287,7 @@ document.addEventListener('click', () => {
 });
 
 // ==================== KEYBOARD SHORTCUTS ====================
+const VIEW_ORDER = ['overview', 'day', 'week', 'month', 'inbox'];
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     if (document.getElementById('modalOverlay').classList.contains('show')) {
@@ -3218,10 +3297,32 @@ document.addEventListener('keydown', (e) => {
     }
     return;
   }
-  // Don't intercept when typing in inputs/textareas
+  // Don't intercept when typing in inputs/textareas (except ctrl+arrow combos)
   const tag = e.target.tagName;
-  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
+    // Allow Ctrl+arrow even in inputs (navigate views / flip pages)
+    if (!e.ctrlKey || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight')) return;
+  }
 
+  // Ctrl+↑↓: cycle through views
+  if (e.ctrlKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+    e.preventDefault();
+    const idx = VIEW_ORDER.indexOf(currentView);
+    const dir = e.key === 'ArrowDown' ? 1 : -1;
+    const next = VIEW_ORDER[(idx + dir + VIEW_ORDER.length) % VIEW_ORDER.length];
+    switchView(next);
+    return;
+  }
+  // Ctrl+←→: flip pages (week / month)
+  if (e.ctrlKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+    e.preventDefault();
+    const dir = e.key === 'ArrowRight' ? 1 : -1;
+    if (currentView === 'week') { navigateWeek(dir); }
+    else if (currentView === 'month') { navigateMonth(dir); }
+    return;
+  }
+
+  // Single-key shortcuts (only when NOT focused on input)
   if (e.key === 'n' || e.key === 'N') {
     e.preventDefault();
     openAddModal();
