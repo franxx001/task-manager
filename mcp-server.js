@@ -16,8 +16,14 @@ const CONFIG_FILE = path.join(__dirname, 'data', 'mcp-config.json');
 let config = {};
 try { config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf-8')); } catch {}
 
-const SUPABASE_URL = config.supabaseUrl || 'https://bbcwbuutltmodlkldezf.supabase.co';
-const SUPABASE_ANON_KEY = config.anonKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJiY3didXV0bHRtb2Rsa2xkZXpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2NzAzNDAsImV4cCI6MjA5NzI0NjM0MH0.hmXOvHFevOKTFy-_bNV9z8a0Mage9qUOmaFl9-_L9yc';
+const SUPABASE_URL = config.supabaseUrl;
+const SUPABASE_ANON_KEY = config.anonKey;
+
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  console.error('[mcp-server] 缺少 Supabase 配置，请创建 data/mcp-config.json');
+  console.error('  { "supabaseUrl": "https://xxx.supabase.co", "anonKey": "eyJ..." }');
+  process.exit(1);
+}
 const AUTH_FILE = path.join(__dirname, 'data', 'mcp-auth.json');
 
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
