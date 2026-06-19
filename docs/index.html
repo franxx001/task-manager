@@ -1631,7 +1631,7 @@ function withTimeout(promise, ms) {
 let tasks = [];
 let editingId = null;
 let titleParsed = false; // NL parsing done for current modal session
-let currentView = 'overview';
+let currentView = localStorage.getItem('task-view') || 'overview';
 let weekOffset = 0;
 let monthOffset = 0;
 let dayViewDate = null;
@@ -3138,6 +3138,7 @@ function updateSidebarStats() {
 // ==================== VIEW SWITCHING ====================
 function switchView(view) {
   currentView = view;
+  localStorage.setItem('task-view', view);
   // Update sidebar nav
   document.querySelectorAll('.sidebar-nav-item').forEach(item => item.classList.remove('active'));
   const sideItem = document.querySelector(`.sidebar-nav-item[data-view="${view}"]`);
@@ -3409,6 +3410,8 @@ const debouncedRenderInbox = debounce(renderInbox);
       document.getElementById(id).classList.add('collapsed');
     }
   });
+  // Restore last view (sidebar nav + view visibility)
+  switchView(currentView);
   // Header hamburger: open sidebar on mobile
   const hamburger = document.getElementById('headerHamburger');
   hamburger.addEventListener('click', () => {
