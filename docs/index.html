@@ -1378,24 +1378,11 @@ async function keyToEmail(key) {
 
 async function apiLogin(key) {
   const email = await keyToEmail(key);
-  // Try sign in
   const { data, error } = await sb.auth.signInWithPassword({ email, password: key });
-  if (!error) {
-    sessionUser = data.user;
-    localStorage.setItem('task-session', '1');
-    return data.user;
-  }
-  // First-time user: auto-register then sign in
-  if (error.message?.includes('Invalid login') || error.status === 400) {
-    const { error: signupErr } = await sb.auth.signUp({ email, password: key });
-    if (signupErr) throw new Error('注册失败: ' + signupErr.message);
-    const { data: data2, error: err2 } = await sb.auth.signInWithPassword({ email, password: key });
-    if (err2) throw new Error('登录失败: ' + err2.message);
-    sessionUser = data2.user;
-    localStorage.setItem('task-session', '1');
-    return data2.user;
-  }
-  throw new Error(error.message || '密钥错误');
+  if (error) throw new Error('密钥错误');
+  sessionUser = data.user;
+  localStorage.setItem('task-session', '1');
+  return data.user;
 }
 
 async function ensureAuth() {
