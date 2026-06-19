@@ -81,11 +81,14 @@ node dev-server.js
 # → http://localhost:3457
 ```
 
-### 首次登录
+### 创建用户
 
-输入任意密钥，系统自动创建账号（密钥 → SHA256 ← email）。后续登录使用同一密钥。
+需在 Supabase 控制台手动创建用户：
+1. Authentication → Users → Add User
+2. Email = SHA256(密钥)[:16] + `@tm.local`，Password = 密钥
+3. 登录页输入密钥即可
 
-> 注意：Supabase 项目需开启 Email Auth，并关闭邮箱确认（或使用自定义 SMTP）。
+> 复刻者可将 `keyToEmail()` 逻辑替换为自己的规则。
 
 ### 配置 MCP Server（可选）
 
