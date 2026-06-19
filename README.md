@@ -18,8 +18,8 @@
 
 ```
 前端: 纯 HTML/CSS/JS（单文件 ~80KB，无框架）
-后端: Express.js（静态服务 + REST API）
-存储: Supabase（云端）+ data/tasks.json（本地缓存）
+存储: Supabase（云端 PostgreSQL + Auth）
+部署: GitHub Pages（纯静态，零依赖服务器）
 MCP:  @modelcontextprotocol/sdk（StdioServerTransport）
 ```
 
@@ -28,50 +28,73 @@ MCP:  @modelcontextprotocol/sdk（StdioServerTransport）
 ```
 task-manager/
 ├── docs/
-│   ├── index.html      # 前端 SPA（全部逻辑）
+│   ├── index.html       # 前端 SPA（全部逻辑）
 │   ├── manifest.json    # PWA 清单
+│   ├── sw.js            # Service Worker
 │   └── icon-*.png       # PWA 图标
-├── data/
-│   ├── tasks.json       # 本地任务数据
-│   ├── auth.json        # 登录密钥
-│   └── mcp-config.json  # Supabase 配置
-├── server.js            # Express 后端（端口 3456）
-├── dev-server.js        # 纯静态开发服务器（端口 3457）
+├── data/                # gitignored，本地配置
+│   └── mcp-config.json  # Supabase 凭据
+├── dev-server.js        # 本地开发静态服务器（端口 3457）
 ├── mcp-server.js        # MCP Server（stdio 传输，直连 Supabase）
-├── mcp-login.js         # MCP 登录助手
 └── package.json
 ```
 
-## 快速开始
+## 部署
 
-### 1. 安装依赖
+### GitHub Pages（推荐）
+
+1. Fork 本仓库
+2. 创建自己的 Supabase 项目，建表：
+
+```sql
+CREATE TABLE tasks (
+  id TEXT PRIMARY KEY,
+  user_id UUID REFERENCES auth.users,
+  title TEXT NOT NULL,
+  description TEXT DEFAULT '',
+  status TEXT DEFAULT 'todo',
+  priority TEXT DEFAULT 'medium',
+  date TEXT DEFAULT '',
+  tags JSONB DEFAULT '[]',
+  subtasks JSONB DEFAULT '[]',
+  "order" BIGINT DEFAULT 0,
+  recurrence JSONB,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- RLS 策略：用户只能读写自己的任务
+ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users own tasks" ON tasks
+  FOR ALL USING (auth.uid() = user_id);
+```
+
+3. 替换 `docs/index.html` 中 `SUPABASE_URL` 和 `SUPABASE_ANON_KEY` 为自己的
+4. Repo Settings → Pages → Source: `main` / `docs` → Save
+5. 访问 `https://<你的用户名>.github.io/task-manager/`
+
+### 本地开发
 
 ```bash
 npm install
-```
-
-### 2. 启动服务
-
-```bash
-# 带 API 服务（推荐）
-npm start
-# → 打开 http://localhost:3456
-
-# 或纯静态（不需要后端，但无数据持久化）
 node dev-server.js
-# → 打开 http://localhost:3457
+# → http://localhost:3457
 ```
 
-### 3. 登录
+### 首次登录
 
-首次启动自动生成密钥，控制台会打印。在登录页输入即可，Token 30 天有效。
+输入任意密钥，系统自动创建账号（密钥 → SHA256 ← email）。后续登录使用同一密钥。
 
-### 4. 配置 MCP Server（可选）
+> 注意：Supabase 项目需开启 Email Auth，并关闭邮箱确认（或使用自定义 SMTP）。
+
+### 配置 MCP Server（可选）
 
 ```bash
-# 先通过浏览器登录一次
-# 再运行登录助手
-node mcp-login.js <你的密钥>
+# 创建 data/mcp-config.json
+{
+  "supabaseUrl": "https://你的项目.supabase.co",
+  "anonKey": "你的 anon key"
+}
 
 # 在 WorkBuddy MCP 配置中添加：
 # {

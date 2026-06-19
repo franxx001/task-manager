@@ -1,11 +1,11 @@
 {
   "name": "task-manager",
   "version": "1.0.0",
-  "description": "任务管理器 - 月/周/日视图 + 看板拖拽",
-  "main": "server.js",
+  "description": "任务管理器 — 纯静态 PWA，Supabase + GitHub Pages",
+  "main": "dev-server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node dev-server.js",
+    "start": "node dev-server.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
