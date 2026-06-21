@@ -1214,12 +1214,16 @@ function renderKanban() {
     return (a.order || 0) - (b.order || 0);
   });
 
-  const list = document.getElementById('todayList');
+const list = document.getElementById('todayList');
   if (!sorted.length) {
-    list.innerHTML = `<div class="today-empty"><div class="icon">☀️</div><div class="text">今天还没有任务，点击「+ 添加」开始</div></div>`;
+    list.innerHTML = `
+      <div class="today-empty">
+        <div class="icon">☀️</div>
+        <div class="text">今天还没有任务，点击「+ 添加」开始</div>
+      </div>`;
   } else {
     list.innerHTML = sorted.map(t => `
-      <div class="today-task priority-${t.priority}${t.status === 'done' ? ' done' : ''}" draggable="true" data-id="${t.id}">
+      <div class="today-task priority-${t.priority}${t.status === 'done' ? ' done' : ''}" draggable="true" data-id="${t.id}" data-status="${t.status}">
         <div class="today-check" onclick="event.stopPropagation(); toggleTaskStatus('${t.id}')">✓</div>
         <div class="today-task-body" onclick="editTask('${t.id}')">
           <div class="today-task-title">${esc(t.title)}</div>

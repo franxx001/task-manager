@@ -284,10 +284,10 @@ main.main-content { flex: 1; padding: 1.25rem 1.5rem 6.25rem; overflow: hidden; 
 .today-subtask-item .subtask-card-text.done { text-decoration: line-through; color: #bbb; }
 .today-task.done { opacity: .55; border-left-color: #e0e0e0; }
 .today-empty {
-  text-align: center; padding: 3.75rem 1.25rem; color: #ccc;
+  text-align: center; padding: 3.75rem 1.25rem; color: #666;
 }
 .today-empty .icon { font-size: 3rem; margin-bottom: 0.75rem; }
-.today-empty .text { font-size: 0.875rem; }
+.today-empty .text { font-size: 0.875rem; color: #666; }
 
 /* Drop indicator (shared) */
 .drop-indicator {
@@ -339,8 +339,14 @@ main.main-content { flex: 1; padding: 1.25rem 1.5rem 6.25rem; overflow: hidden; 
   font-size: 0.75rem; color: #aaa; margin-top: 0.25rem;
 }
 .task-card-meta .tag-chip { font-size: 0.75rem; padding: 0.0625rem 0.375rem; }
-.task-card-actions { position: absolute; top: 0.5rem; right: 0.5rem; display: none; gap: 0.25rem; }
-.task-card:hover .task-card-actions { display: flex; }
+.task-card-actions {
+  position: absolute; top: 0.5rem; right: 0.5rem; display: flex; gap: 0.25rem;
+  opacity: 0.4; transition: opacity 0.15s;
+}
+.task-card:hover .task-card-actions,
+.task-card:focus-within .task-card-actions {
+  opacity: 1;
+}
 .task-card-actions button {
   width: 1.5rem; height: 1.5rem; border-radius: 0.25rem; border: none;
   cursor: pointer; display: flex; align-items: center; justify-content: center;
@@ -421,7 +427,7 @@ main.main-content { flex: 1; padding: 1.25rem 1.5rem 6.25rem; overflow: hidden; 
 .agenda-item-tags { display: flex; gap: 0.25rem; flex-shrink: 0; max-width: 40%; overflow: hidden; }
 .agenda-item-tags .tag-chip { font-size: 0.6875rem; padding: 0.0625rem 0.375rem; margin: 0; }
 
-.agenda-empty { text-align: center; color: #bbb; padding: 3rem 1rem; font-size: 0.875rem; }
+.agenda-empty { text-align: center; color: #666; padding: 3rem 1rem; font-size: 0.875rem; }
 
 /* ========== Month View ========== */
 .month-header {
@@ -773,10 +779,10 @@ main.main-content { flex: 1; padding: 1.25rem 1.5rem 6.25rem; overflow: hidden; 
 .inbox-btn.assign-date { color: #4A90D9; }
 .inbox-btn.assign-date:hover { background: #e6f0ff; }
 .inbox-empty {
-  text-align: center; padding: 3.75rem 1.25rem; color: #ccc;
+  text-align: center; padding: 3.75rem 1.25rem; color: #666;
 }
 .inbox-empty .icon { font-size: 3rem; margin-bottom: 0.75rem; }
-.inbox-empty .text { font-size: 0.875rem; }
+.inbox-empty .text { font-size: 0.875rem; color: #666; }
 
 /* ========== Subtasks ========== */
 .subtask-section { margin-top: 1rem; border-top: 0.0625rem solid #eee; padding-top: 0.875rem; }
@@ -875,14 +881,14 @@ main.main-content { flex: 1; padding: 1.25rem 1.5rem 6.25rem; overflow: hidden; 
 /* ========== Empty State ========== */
 .empty-state {
   display: flex; flex-direction: column; align-items: center;
-  justify-content: center; padding: 3.75rem 1.25rem; color: #ccc;
+  justify-content: center; padding: 3.75rem 1.25rem; color: #666;
 }
 .empty-state .icon { font-size: 3rem; margin-bottom: 0.75rem; }
-.empty-state .text { font-size: 0.875rem; }
+.empty-state .text { font-size: 0.875rem; color: #666; }
 
 /* ========== Responsive ========== */
 @media (hover: none) {
-  .task-card-actions { display: flex; }
+  .task-card-actions { opacity: 1; }
   .task-card-actions button { width: 1.75rem; height: 1.75rem; font-size: 0.875rem; }
 }
 @media (max-width: 768px) {
