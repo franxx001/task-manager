@@ -9,8 +9,16 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
-const SUPABASE_URL = 'https://bbcwbuutltmodlkldezf.supabase.co';
-const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJiY3didXV0bHRtb2Rsa2xkZXpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2NzAzNDAsImV4cCI6MjA5NzI0NjM0MH0.hmXOvHFevOKTFy-_bNV9z8a0Mage9qUOmaFl9-_L9yc';
+const CONFIG_FILE = path.join(__dirname, 'data', 'mcp-config.json');
+let config = {};
+try { config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf-8')); } catch {}
+const SUPABASE_URL = config.supabaseUrl || process.env.SUPABASE_URL;
+const ANON_KEY = config.anonKey || process.env.SUPABASE_ANON_KEY;
+if (!SUPABASE_URL || !ANON_KEY) {
+  console.log('❌ 缺少 Supabase 配置，请创建 data/mcp-config.json');
+  console.log('  { "supabaseUrl": "https://xxx.supabase.co", "anonKey": "eyJ..." }');
+  process.exit(1);
+}
 const AUTH_FILE = path.join(__dirname, 'data', 'mcp-auth.json');
 
 const key = process.argv[2];

@@ -1,0 +1,51 @@
+{
+  "env": {
+    "browser": true,
+    "node": true,
+    "es2021": true
+  },
+  "extends": ["eslint:recommended"],
+  "plugins": ["html"],
+  "parserOptions": {
+    "ecmaVersion": 12,
+    "sourceType": "module"
+  },
+  "globals": {
+    "supabase": "readonly",
+    "SUPABASE_URL": "writable",
+    "SUPABASE_ANON_KEY": "writable",
+    "calcNextDate": "writable",
+    "fmtDate": "writable",
+    "createNextRecurrence": "writable",
+    "parseNaturalLang": "writable",
+    "todayStr": "writable"
+  },
+  "rules": {
+    "no-unused-vars": ["warn", { "args": "none" }],
+    "no-var": "off",
+    "prefer-const": "off",
+    "no-empty": ["error", { "allowEmptyCatch": true }]
+  },
+  "overrides": [
+    {
+      "files": ["tests/**/*.test.js"],
+      "env": { "mocha": true }
+    },
+    {
+      "files": ["vitest.config.js"],
+      "parserOptions": { "sourceType": "module" }
+    },
+    {
+      "files": ["docs/config.example.js"],
+      "rules": { "no-unused-vars": "off" }
+    },
+    {
+      "files": ["*.html"],
+      "rules": { "no-unused-vars": "off" }
+    },
+    {
+      "files": ["docs/app.js"],
+      "rules": { "no-unused-vars": "off" }
+    }
+  ]
+}

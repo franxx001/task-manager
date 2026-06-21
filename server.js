@@ -2,6 +2,7 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const shared = require('./docs/shared.js');
 
 const app = express();
 const PORT = process.env.PORT || 3456;
@@ -102,67 +103,15 @@ function saveTasks(tasks) {
 
 // ==================== RECURRENCE HELPERS ====================
 
-function calcNextDate(dateStr, type) {
-  const d = new Date(dateStr + 'T00:00:00');
-  if (type === 'daily') {
-    d.setDate(d.getDate() + 1);
-    return d;
-  }
-  if (type === 'weekdays') {
-    do { d.setDate(d.getDate() + 1); } while (d.getDay() === 0 || d.getDay() === 6);
-    return d;
-  }
-  if (type === 'weekly') {
-    d.setDate(d.getDate() + 7);
-    return d;
-  }
-  return null;
-}
-
-function fmtDate(d) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
-
 function handleRecurrence(task, tasks) {
-  if (!task.recurrence) return;
+  if (!task || !task.recurrence) return;
+  var nextTask = shared.createNextRecurrence(task);
+  if (!nextTask) return;
 
-  const { type, remaining, endDate } = task.recurrence;
-  if (!type) return;
-
-  // Check remaining count
-  if (remaining !== null && remaining !== undefined && remaining <= 0) return;
-
-  // Calculate next date
-  const next = calcNextDate(task.date, type);
-  if (!next) return;
-
-  const nextStr = fmtDate(next);
-
-  // Check end date
-  if (endDate && nextStr > endDate) return;
-
-  const maxOrder = tasks.reduce((max, t) => Math.max(max, t.order || 0), 0);
-    const newTask = {
-    id: 't_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
-    title: task.title,
-    desc: task.desc || '',
-    status: 'todo',
-    priority: task.priority,
-    date: nextStr,
-    tags: task.tags || [],
-    order: maxOrder + 1000,
-    recurrence: {
-      type,
-      remaining: remaining !== null && remaining !== undefined ? remaining - 1 : null,
-      endDate: endDate || null,
-    },
-  };
-  // Ensure "循环" tag
-  if (!newTask.tags.includes('循环')) newTask.tags.push('循环');
-  tasks.push(newTask);
+  var maxOrder = tasks.reduce(function(max, t) { return Math.max(max, t.order || 0); }, 0);
+  nextTask.id = 't_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+  nextTask.order = maxOrder + 1000;
+  tasks.push(nextTask);
 }
 
 // Demo seeding removed - use the UI to create tasks

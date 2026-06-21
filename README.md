@@ -23,15 +23,24 @@
 
 ## 技术栈
 
-单文件 HTML（CSS + JS 内联），无框架。Supabase 做数据层，Service Worker 做 PWA 缓存。
+HTML（骨架）+ 外部 CSS/JS，无框架。Supabase 做数据层，Service Worker 做 PWA 缓存。
 
 ```
 docs/
-├── index.html       # 主应用（单文件）
+├── index.html       # HTML 骨架
+├── style.css        # 样式表（从 index.html 提取）
+├── app.js           # 应用主逻辑（从 index.html 提取）
+├── shared.js        # 共享纯函数（浏览器 + Node）
+├── config.example.js # Supabase 配置模板（复制为 config.js 并填入凭证）
+├── config.js        # Supabase 配置（已 gitignore，不提交）
 ├── manifest.json    # PWA 清单
 ├── sw.js            # Service Worker
 ├── icon-192.png     # 应用图标
 └── icon-512.png
+tests/
+└── shared.test.js   # 单元测试（23 个用例）
+migrations/
+└── 001-init.sql     # 数据库迁移脚本
 data/
 ├── tasks.json       # 本地数据（express server 用）
 ├── auth.json        # 服务端密钥
@@ -41,6 +50,13 @@ server.js            # Express 后端（本地双模式：JSON 文件或 Supabas
 dev-server.js        # 纯静态开发服务器
 mcp-server.js        # MCP Server（AI 直接操作 Supabase）
 mcp-login.js         # MCP 登录脚本
+.github/
+└── workflows/
+    └── ci.yml       # GitHub Actions CI（lint + test + deploy）
+migrations/
+└── 001-init.sql     # 数据库迁移脚本
+tests/
+└── shared.test.js   # 单元测试
 ```
 
 ## 部署
@@ -76,7 +92,7 @@ CREATE POLICY tasks_owner ON tasks FOR ALL
 ### 2. GitHub Pages
 
 1. Fork 仓库，`docs/` 目录设为 GitHub Pages 来源
-2. 修改 `docs/` 中 Supabase 的 `SUPABASE_URL` 和 `SUPABASE_ANON_KEY`
+2. 复制 `docs/config.example.js` 为 `docs/config.js`，填入你的 Supabase 项目凭证
 
 ### 3. MCP Server（可选）
 

@@ -1,6 +1,7 @@
 node_modules/
 data/
 .workbuddy/
+docs/config.js
 # Browser test screenshots
 /01-*.png
 /02-*.png
