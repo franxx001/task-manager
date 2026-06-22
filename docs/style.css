@@ -680,6 +680,18 @@ main.main-content { flex: 1; padding: 1.25rem 1.5rem 6.25rem; overflow: hidden; 
 }
 .form-actions { display: flex; justify-content: flex-end; gap: 0.625rem; margin-top: 1.25rem; }
 
+/* ========== Weekday Picker ========== */
+.weekday-picker { display: flex; gap: 0.25rem; }
+.wd-btn {
+  width: 2.25rem; height: 2.25rem; border-radius: 50%; border: 0.0625rem solid #d9d9d9;
+  background: #fff; cursor: pointer; font-size: 0.8125rem; font-weight: 500;
+  color: #666; transition: all .15s;
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0; line-height: 1; font-family: inherit;
+}
+.wd-btn:hover { border-color: #4A90D9; color: #4A90D9; }
+.wd-btn.active { background: #4A90D9; color: #fff; border-color: #4A90D9; }
+
 /* ========== Undo Bar ========== */
 .undo-bar {
   display: flex; align-items: center; gap: 0.5rem;

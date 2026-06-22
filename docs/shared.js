@@ -3,14 +3,34 @@
 
   // ==================== RECURRENCE HELPERS ====================
 
-  function calcNextDate(dateStr, type) {
+  function calcNextDate(dateStr, type, weekdays, monthDay) {
     var d = new Date(dateStr + 'T00:00:00');
     if (type === 'daily') { d.setDate(d.getDate() + 1); return d; }
     if (type === 'weekdays') {
       do { d.setDate(d.getDate() + 1); } while (d.getDay() === 0 || d.getDay() === 6);
       return d;
     }
-    if (type === 'weekly') { d.setDate(d.getDate() + 7); return d; }
+    if (type === 'monthly') {
+      var day = monthDay || parseInt(dateStr.split('-')[2], 10);
+      var y = d.getFullYear();
+      var m = d.getMonth() + 1;
+      if (m > 11) { m = 0; y++; }
+      var lastDay = new Date(y, m + 1, 0).getDate();
+      d = new Date(y, m, Math.min(day, lastDay));
+      return d;
+    }
+    if (type === 'weekly') {
+      if (weekdays && weekdays.length > 0) {
+        d.setDate(d.getDate() + 1);
+        for (var i = 0; i < 7; i++) {
+          if (weekdays.indexOf(d.getDay()) !== -1) return d;
+          d.setDate(d.getDate() + 1);
+        }
+        return d;
+      }
+      d.setDate(d.getDate() + 7);
+      return d;
+    }
     return null;
   }
 
@@ -23,11 +43,12 @@
   function createNextRecurrence(task) {
     if (!task || !task.recurrence) return null;
     var rec = task.recurrence;
-    var type = rec.type, remaining = rec.remaining, endDate = rec.endDate;
+    var type = rec.type, remaining = rec.remaining, endDate = rec.endDate,
+        weekdays = rec.weekdays, monthDay = rec.monthDay;
     if (!type) return null;
     if (typeof remaining === 'number' && remaining <= 0) return null;
 
-    var next = calcNextDate(task.date, type);
+    var next = calcNextDate(task.date, type, weekdays, monthDay);
     if (!next) return null;
     var nextStr = fmtDate(next);
     if (endDate && nextStr > endDate) return null;
@@ -48,6 +69,8 @@
         return { id: s.id, title: s.title, done: false };
       }),
     };
+    if (weekdays && weekdays.length > 0) nextTask.recurrence.weekdays = weekdays;
+    if (monthDay) nextTask.recurrence.monthDay = monthDay;
     if (nextTask.tags.indexOf('循环') === -1) nextTask.tags.push('循环');
     return nextTask;
   }

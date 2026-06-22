@@ -156,6 +156,9 @@ app.post('/api/tasks', (req, res) => {
         remaining: recurrence.remaining !== undefined ? recurrence.remaining : null,
         endDate: recurrence.endDate || null,
       };
+      if (recurrence.weekdays && recurrence.weekdays.length > 0) {
+        newTask.recurrence.weekdays = recurrence.weekdays;
+      }
       // Auto-add "循环" tag
       if (!newTask.tags.includes('循环')) newTask.tags.push('循环');
     }
@@ -198,6 +201,9 @@ app.put('/api/tasks/:id', (req, res) => {
         remaining: recurrence.remaining !== undefined ? recurrence.remaining : null,
         endDate: recurrence.endDate || null,
       } : null;
+      if (recurrence && recurrence.weekdays && recurrence.weekdays.length > 0) {
+        update.recurrence.weekdays = recurrence.weekdays;
+      }
     }
 
     tasks[idx] = { ...tasks[idx], ...update };

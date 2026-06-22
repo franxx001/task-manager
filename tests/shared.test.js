@@ -23,7 +23,7 @@ describe('calcNextDate', function() {
   });
 
   it('returns null for unknown type', function() {
-    var r = shared.calcNextDate('2026-01-01', 'monthly');
+    var r = shared.calcNextDate('2026-01-01', 'unknown');
     assert.strictEqual(r, null);
   });
 });

@@ -288,6 +288,7 @@ function withTimeout(promise, ms) {
 let tasks = [];
 let editingId = null;
 let titleParsed = false; // NL parsing done for current modal session
+let weeklyDays = new Set();
 let currentView = localStorage.getItem('task-view') || 'overview';
 let weekOffset = 0;
 let monthOffset = 0;
@@ -395,6 +396,9 @@ async function doSaveTask() {
   if (recType) {
     const endType = document.getElementById('taskRecurrenceEnd').value;
     recurrence = { type: recType };
+    if (recType === 'weekly' && weeklyDays.size > 0) {
+      recurrence.weekdays = Array.from(weeklyDays).sort();
+    }
     if (endType === 'count') recurrence.remaining = parseInt(document.getElementById('taskRecurrenceCount').value) || 5;
     if (endType === 'date') recurrence.endDate = document.getElementById('taskRecurrenceDate').value;
   }
@@ -625,14 +629,19 @@ function recurrenceLabel(r) {
   if (!r || !r.type) return '';
   const map = { daily:'每天', weekdays:'工作日', weekly:'每周' };
   let s = '🔄 ' + (map[r.type] || r.type);
+  if (r.type === 'weekly' && r.weekdays && r.weekdays.length > 0) {
+    const dayNames = ['日','一','二','三','四','五','六'];
+    s += ' (' + r.weekdays.map(function(d) { return dayNames[d]; }).join('') + ')';
+  }
   if (r.remaining !== null && r.remaining !== undefined) s += ' · 剩余' + r.remaining + '次';
   if (r.endDate) s += ' · 至' + r.endDate;
   return s;
 }
 
 function onRecurrenceTypeChange() {
-  const show = document.getElementById('taskRecurrenceType').value !== '';
-  document.getElementById('recurrenceOptions').style.display = show ? 'block' : 'none';
+  const type = document.getElementById('taskRecurrenceType').value;
+  document.getElementById('weeklyDayPicker').style.display = type === 'weekly' ? 'block' : 'none';
+  document.getElementById('recurrenceOptions').style.display = type !== '' ? 'block' : 'none';
 }
 function onRecurrenceEndChange() {
   const v = document.getElementById('taskRecurrenceEnd').value;
@@ -1520,6 +1529,9 @@ function openAddModal(date) {
   // Reset recurrence
   document.getElementById('taskRecurrenceType').value = '';
   document.getElementById('recurrenceOptions').style.display = 'none';
+  document.getElementById('weeklyDayPicker').style.display = 'none';
+  weeklyDays.clear();
+  document.querySelectorAll('.wd-btn').forEach(function(b) { b.classList.remove('active'); });
   // Reset subtasks
   editingSubtasks = [];
   renderSubtaskList();
@@ -1546,6 +1558,17 @@ function editTask(id) {
   if (rec && rec.type) {
     document.getElementById('taskRecurrenceType').value = rec.type;
     document.getElementById('recurrenceOptions').style.display = 'block';
+    // Restore weekly days
+    if (rec.type === 'weekly') {
+      document.getElementById('weeklyDayPicker').style.display = 'block';
+      weeklyDays = new Set(rec.weekdays || []);
+      document.querySelectorAll('.wd-btn').forEach(function(btn) {
+        if (weeklyDays.has(parseInt(btn.dataset.day))) btn.classList.add('active');
+      });
+    } else {
+      document.getElementById('weeklyDayPicker').style.display = 'none';
+      weeklyDays.clear();
+    }
     if (rec.remaining !== null && rec.remaining !== undefined) {
       document.getElementById('taskRecurrenceEnd').value = 'count';
       document.getElementById('taskRecurrenceCount').value = rec.remaining;
@@ -1564,6 +1587,8 @@ function editTask(id) {
   } else {
     document.getElementById('taskRecurrenceType').value = '';
     document.getElementById('recurrenceOptions').style.display = 'none';
+    document.getElementById('weeklyDayPicker').style.display = 'none';
+    weeklyDays.clear();
   }
   // Load subtasks
   editingSubtasks = (task.subtasks || []).map(s => ({ ...s }));
@@ -2038,6 +2063,20 @@ document.getElementById('tagInput').addEventListener('blur', () => {
 // Close suggestions on outside click
 document.addEventListener('click', e => {
   if (!e.target.closest('.tag-form-group')) hideSuggestions();
+});
+
+// Weekday picker toggle
+document.getElementById('weekdayPicker').addEventListener('click', function(e) {
+  var btn = e.target.closest('.wd-btn');
+  if (!btn) return;
+  var day = parseInt(btn.dataset.day);
+  if (weeklyDays.has(day)) {
+    weeklyDays.delete(day);
+    btn.classList.remove('active');
+  } else {
+    weeklyDays.add(day);
+    btn.classList.add('active');
+  }
 });
 
 // Startup
