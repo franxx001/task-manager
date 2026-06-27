@@ -1,6 +1,6 @@
 # 任务管理器
 
-纯静态 PWA 任务管理应用，Supabase 后端 + GitHub Pages 部署。
+纯静态 PWA 任务管理应用，浏览器直连 Supabase，GitHub Pages 部署。
 
 ## 功能
 
@@ -14,57 +14,54 @@
 
 **核心能力：**
 
-- **50 行正则自然语言解析** — 新建任务标题框失焦时自动解析：`明天买牛奶 #生活 高优先级` → 自动填充日期 2026-06-19、标签「生活」、优先级「高」
+- **50 行正则自然语言解析** — 新建任务标题框失焦时自动解析：`明天买牛奶 #生活 高优先级` → 自动填充日期、标签、优先级
 - **键盘快捷键** — `N` 新建任务，`T` 切到今天，`Ctrl+↑↓` 切换视图，`Ctrl+←→` 翻页，`Esc` 关闭弹窗
 - **拖拽排序** — 日视图、周视图支持拖拽调整任务顺序
 - **循环任务** — 支持每日/工作日/每周循环，可设次数或截止日期
 - **子任务** — 全部子任务勾选后自动标记父任务完成
-- **PWA** — 可安装到桌面，离线缓存兜底
+- **PWA** — 可安装到桌面，Service Worker 离线缓存
+
+## 架构
+
+```
+浏览器 ──HTTPS──→ Supabase (数据库 + API)
+```
+
+无中间服务器。安全由 Supabase RLS（Row Level Security）保障，anon key 公开。
 
 ## 技术栈
 
-HTML（骨架）+ 外部 CSS/JS，无框架。Supabase 做数据层，Service Worker 做 PWA 缓存。
+Vanilla JS + CSS，无框架。Supabase 做数据层，Service Worker 做 PWA 缓存。
+
+## 项目结构
 
 ```
-docs/
-├── index.html       # HTML 骨架
-├── style.css        # 样式表（从 index.html 提取）
-├── app.js           # 应用主逻辑（从 index.html 提取）
-├── shared.js        # 共享纯函数（浏览器 + Node）
-├── config.example.js # Supabase 配置模板（复制为 config.js 并填入凭证）
-├── config.js        # Supabase 配置（已 gitignore，不提交）
-├── manifest.json    # PWA 清单
-├── sw.js            # Service Worker
-├── icon-192.png     # 应用图标
-└── icon-512.png
+docs/                    ← GitHub Pages 部署目录
+├── index.html           HTML 骨架
+├── style.css            样式表
+├── app.js               应用主逻辑（~2000 行）
+├── shared.js            共享纯函数（浏览器 + Node）
+├── config.js            Supabase 配置（已提交，含默认凭证）
+├── config.example.js    配置模板
+├── manifest.json        PWA 清单
+├── sw.js                Service Worker
+├── icon-192.png
+├── icon-512.png
 tests/
-└── shared.test.js   # 单元测试（23 个用例）
+├── shared.test.js       单元测试（23 个用例）
 migrations/
-└── 001-init.sql     # 数据库迁移脚本
-data/
-├── tasks.json       # 本地数据（express server 用）
-├── auth.json        # 服务端密钥
-├── mcp-config.json  # MCP 的 Supabase 配置
-└── mcp-auth.json    # MCP 登录态
-server.js            # Express 后端（本地双模式：JSON 文件或 Supabase）
-dev-server.js        # 纯静态开发服务器
-mcp-server.js        # MCP Server（AI 直接操作 Supabase）
-mcp-login.js         # MCP 登录脚本
-.github/
-└── workflows/
-    └── ci.yml       # GitHub Actions CI（lint + test + deploy）
-migrations/
-└── 001-init.sql     # 数据库迁移脚本
-tests/
-└── shared.test.js   # 单元测试
+├── 001-init.sql         数据库迁移脚本
+server.js                Express 后端（旧方案，不再使用）
+dev-server.js            本地静态开发服务器
 ```
 
 ## 部署
 
 ### 1. Supabase 初始化
 
+在 Supabase SQL Editor 执行 `migrations/001-init.sql`：
+
 ```sql
--- 建表
 CREATE TABLE tasks (
   id TEXT PRIMARY KEY,
   title TEXT NOT NULL,
@@ -80,7 +77,6 @@ CREATE TABLE tasks (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- RLS
 ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
 CREATE POLICY tasks_owner ON tasks FOR ALL
   USING (auth.uid() = user_id)
@@ -89,40 +85,24 @@ CREATE POLICY tasks_owner ON tasks FOR ALL
 
 **重要：** Supabase 项目需关闭公开注册（Authentication → Settings → 关闭 "Enable Signup"）。用户在 Supabase Dashboard 手动创建，网页端仅提供登录。
 
-### 2. GitHub Pages
+### 2. 配置凭证
+
+编辑 `docs/config.js`，替换为你的 Supabase 项目凭证（URL + anon key）。
+
+### 3. GitHub Pages
 
 1. Fork 仓库，`docs/` 目录设为 GitHub Pages 来源
-2. 复制 `docs/config.example.js` 为 `docs/config.js`，填入你的 Supabase 项目凭证
-
-### 3. MCP Server（可选）
-
-让 AI 直接操作你的任务数据：
-
-```json
-// data/mcp-config.json
-{
-  "supabaseUrl": "https://xxx.supabase.co",
-  "anonKey": "eyJhbG..."
-}
-```
-
-```
-node mcp-login.js   # 先登录获取 session
-node mcp-server.js  # 启动 MCP
-```
-
-在 WorkBuddy 的 MCP 配置中指向 `mcp-server.js`。
+2. 推送即自动部署（CI 流水线含 lint + test + deploy）
 
 ## 本地开发
 
 ```bash
-npm run dev     # 启动静态服务器 → http://localhost:3457
-node server.js  # 启动 Express（含 API） → http://localhost:3456
+npm install
+npm run dev     # http://localhost:3457
+npm test        # 运行 23 条单元测试
+npm run lint    # ESLint 检查
 ```
 
 ## 离线模式
 
-如果 Supabase 无法连接，应用自动降落：
-- 从 localStorage 缓存读取已有任务
-- 新任务保存到缓存
-- 恢复连接后手动刷新同步
+Service Worker 缓存静态资源，Supabase 不可用时应用仍可加载界面。数据暂存 localStorage，恢复连接后刷新同步。
