@@ -1039,22 +1039,28 @@ function renderOverview() {
 
   document.getElementById('overviewStats').innerHTML = `
     <div class="stat-card">
-      <div class="stat-icon total">📋</div>
+      <div class="stat-icon total">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="M12 11h4"></path><path d="M12 16h4"></path><path d="M8 11h.01"></path><path d="M8 16h.01"></path></svg>
+      </div>
       <div><div class="stat-val">${total}</div><div class="stat-label">总任务</div></div>
     </div>
     <div class="stat-card">
-      <div class="stat-icon done">✅</div>
+      <div class="stat-icon done">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+      </div>
       <div><div class="stat-val">${done}</div><div class="stat-label">已完成</div></div>
     </div>
     <div class="stat-card">
-      <div class="stat-icon" style="background:#fff1f0;">📌</div>
-      <div><div class="stat-val">${todo}</div><div class="stat-label">待办</div></div>
+      <div class="stat-icon todo">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+      </div>
+      <div><div class="stat-val">${todo}</div><div class="stat-label">待办任务</div></div>
     </div>
   `;
 
   const wrap = document.getElementById('overviewTableWrap');
   if (!filtered.length) {
-    wrap.innerHTML = `<div class="empty-state"><div class="icon">📭</div><div class="text">没有匹配的任务</div></div>`;
+    wrap.innerHTML = `<div class="empty-state"><div class="icon">✨</div><div class="text">没有匹配的任务</div></div>`;
     return;
   }
 
@@ -1228,7 +1234,7 @@ const list = document.getElementById('todayList');
     list.innerHTML = `
       <div class="today-empty">
         <div class="icon">☀️</div>
-        <div class="text">今天还没有任务，点击「+ 添加」开始</div>
+        <div class="text">今天还没有任务，点击「+ 添加任务」开始吧</div>
       </div>`;
   } else {
     list.innerHTML = sorted.map(t => `
@@ -1240,7 +1246,6 @@ const list = document.getElementById('todayList');
           ${todaySubtasksHTML(t)}
         </div>
         ${(t.tags && t.tags.length) ? `<div class="today-task-tags">${tagChipsHTML(t.tags)}</div>` : ''}
-        </div>
       </div>`).join('');
   }
 
@@ -1752,12 +1757,9 @@ function toggleSidebar() {
   const sidebar = document.getElementById('sidebar');
   sidebarCollapsed = !sidebarCollapsed;
   sidebar.classList.toggle('collapsed', sidebarCollapsed);
-  // Update toggle button icon
-  const toggle = sidebar.querySelector('.sidebar-toggle');
-  toggle.textContent = '☰';
   // Sync bottom bar
   const bottomBar = document.getElementById('bottomBar');
-  if (bottomBar) bottomBar.style.left = sidebarCollapsed ? '0' : '15rem';
+  if (bottomBar) bottomBar.style.left = sidebarCollapsed ? '0' : 'var(--sidebar-w, 16rem)';
   // Save preference
   localStorage.setItem('task-sidebar-collapsed', sidebarCollapsed ? '1' : '0');
 }
@@ -2093,17 +2095,51 @@ const debouncedRenderOverview = debounce(renderOverview);
 const debouncedRenderInbox = debounce(renderInbox);
 
 
+// ==================== THEME MANAGEMENT ====================
+function initTheme() {
+  const saved = localStorage.getItem('task-theme') || 'auto';
+  applyTheme(saved);
+  try {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    mq.addEventListener('change', () => {
+      if ((localStorage.getItem('task-theme') || 'auto') === 'auto') {
+        applyTheme('auto');
+      }
+    });
+  } catch {}
+}
+
+function applyTheme(theme) {
+  let isDark = false;
+  if (theme === 'dark') isDark = true;
+  else if (theme === 'light') isDark = false;
+  else isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  const btn = document.getElementById('themeToggleBtn');
+  if (btn) {
+    btn.setAttribute('title', isDark ? '当前: 深色模式 (点击切换浅色)' : '当前: 浅色模式 (点击切换深色)');
+  }
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme') || 'light';
+  const next = current === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('task-theme', next);
+  applyTheme(next);
+}
+
 // Startup
 (async function init() {
+  initTheme();
   // Sidebar: auto-collapse on mobile only; desktop always starts visible
   if (window.innerWidth <= 768) {
     sidebarCollapsed = true;
     document.getElementById('sidebar').classList.add('collapsed');
-    document.querySelector('.sidebar-toggle').textContent = '☰';
   }
   // Sync bottom bar with sidebar state
   const bb = document.getElementById('bottomBar');
-  if (bb) bb.style.left = sidebarCollapsed ? '0' : '15rem';
+  if (bb) bb.style.left = sidebarCollapsed ? '0' : 'var(--sidebar-w, 16rem)';
   // Restore collapsible section states
   ['sidebarTagSection'].forEach(id => {
     if (localStorage.getItem('task-section-' + id) === '1') {

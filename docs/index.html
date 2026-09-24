@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
-<meta name="description" content="任务管理器 — 月视图、周视图、日常看板、拖拽排序、标签筛选与进度统计">
-<meta name="theme-color" content="#2E6EB5">
-<title>任务管理器</title>
+<meta name="description" content="任务管理器 — 极简现代的日常待办、日程看板、多视图管理与进度统计">
+<meta name="theme-color" content="#2563eb">
+<title>任务管理器 — TaskFlow</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <link rel="stylesheet" href="style.css">
@@ -14,18 +14,18 @@
 </head>
 <body>
 
-<!-- App Shell: Sidebar + Main -->
 <!-- Login Overlay -->
 <div class="login-overlay hidden" id="loginOverlay">
   <div class="login-card">
-    <h2>🔑 任务管理器</h2>
-    <p>请输入密钥以继续</p>
+    <div style="font-size:2.25rem;margin-bottom:0.75rem;">⚡</div>
+    <h2>TaskFlow 任务管理</h2>
+    <p>请输入安全访问密钥以继续</p>
     <div class="login-key-display" id="loginKeyHelp" style="display:none;">
       密钥保存在服务器 <code>data/auth.json</code> 文件中<br>
       首次启动时已打印在控制台
     </div>
-    <input class="login-input" id="loginKeyInput" type="password" placeholder="输入登录密钥" autofocus>
-    <button class="login-btn" id="loginBtn">登录</button>
+    <input class="login-input" id="loginKeyInput" type="password" placeholder="输入访问密钥" autofocus>
+    <button class="login-btn" id="loginBtn">进入系统</button>
     <div class="login-error" id="loginError"></div>
   </div>
 </div>
@@ -35,27 +35,55 @@
 <!-- Sidebar -->
 <div class="sidebar" id="sidebar">
   <div class="sidebar-header">
-    <span class="sidebar-logo">📋 任务管理器</span>
-    <button class="sidebar-toggle" onclick="toggleSidebar()" title="折叠侧边栏">☰</button>
+    <div class="sidebar-brand">
+      <span class="sidebar-logo-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"></path>
+          <path d="M7 7h.01"></path>
+        </svg>
+      </span>
+      <span class="sidebar-logo">TaskFlow</span>
+    </div>
+    <button class="sidebar-toggle" onclick="toggleSidebar()" title="折叠侧边栏" aria-label="折叠侧边栏">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect width="18" height="18" x="3" y="3" rx="2"></rect>
+        <path d="M9 3v18"></path>
+      </svg>
+    </button>
   </div>
   <div class="sidebar-body">
     <!-- Nav Items -->
     <div class="sidebar-nav" id="sidebarNav">
       <button class="sidebar-nav-item active" data-view="overview">
-        <span class="nav-icon">📊</span> 概览
+        <span class="nav-icon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"></rect><rect width="7" height="5" x="14" y="3" rx="1"></rect><rect width="7" height="9" x="14" y="12" rx="1"></rect><rect width="7" height="5" x="3" y="16" rx="1"></rect></svg>
+        </span>
+        <span class="nav-label">概览</span>
         <span class="nav-badge" id="navBadgeTotal">0</span>
       </button>
       <button class="sidebar-nav-item" data-view="day">
-        <span class="nav-icon">☀️</span> 今天
+        <span class="nav-icon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg>
+        </span>
+        <span class="nav-label">今天</span>
       </button>
       <button class="sidebar-nav-item" data-view="week">
-        <span class="nav-icon">📅</span> 周视图
+        <span class="nav-icon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect><line x1="16" x2="16" y1="2" y2="6"></line><line x1="8" x2="8" y1="2" y2="6"></line><line x1="3" x2="21" y1="10" y2="10"></line><path d="M8 14h.01"></path><path d="M12 14h.01"></path><path d="M16 14h.01"></path><path d="M8 18h.01"></path><path d="M12 18h.01"></path><path d="M16 18h.01"></path></svg>
+        </span>
+        <span class="nav-label">周视图</span>
       </button>
       <button class="sidebar-nav-item" data-view="month">
-        <span class="nav-icon">📋</span> 月视图
+        <span class="nav-icon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect><line x1="16" x2="16" y1="2" y2="6"></line><line x1="8" x2="8" y1="2" y2="6"></line><line x1="3" x2="21" y1="10" y2="10"></line></svg>
+        </span>
+        <span class="nav-label">月视图</span>
       </button>
       <button class="sidebar-nav-item" data-view="inbox">
-        <span class="nav-icon">📥</span> 收件箱
+        <span class="nav-icon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path></svg>
+        </span>
+        <span class="nav-label">收件箱</span>
         <span class="nav-badge" id="navBadgeInbox">0</span>
       </button>
     </div>
@@ -63,21 +91,30 @@
     <!-- Tag Filter Section (Collapsible) -->
     <div class="sidebar-section" id="sidebarTagSection">
       <div class="sidebar-section-header" onclick="toggleSidebarSection('sidebarTagSection')">
-        <span>🏷️ 标签筛选</span>
+        <span>标签筛选</span>
         <span class="sidebar-section-arrow">▼</span>
       </div>
       <div class="sidebar-section-content">
         <div class="sidebar-tag-list" id="sidebarTagList"></div>
       </div>
     </div>
-    <div style="margin-top:auto;border-top:0.0625rem solid #f0f0f0;padding-bottom:env(safe-area-inset-bottom, 0);">
+
+    <!-- Sidebar Footer & Dashboard -->
+    <div class="sidebar-footer">
       <div class="sidebar-stats" id="sidebarStats">
         <div class="sidebar-stat-row"><span>总任务</span><span class="val" id="sidebarStatTotal">0</span></div>
         <div class="sidebar-stat-row"><span>已完成</span><span class="val" id="sidebarStatDone">0</span></div>
         <div class="sidebar-stat-row"><span>进行中</span><span class="val" id="sidebarStatProgress">0</span></div>
       </div>
-      <div style="padding:0.5rem 0.75rem 0.75rem;text-align:center;">
-        <button class="btn-ghost-tiny" onclick="doLogout()" title="退出登录" style="font-size:1.25rem;font-weight:bold;padding:0.5rem;">⊘</button>
+      <div class="sidebar-user-bar">
+        <button class="sidebar-logout-btn" onclick="doLogout()" title="退出当前登录">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" x2="9" y1="12" y2="12"></line>
+          </svg>
+          <span>退出登录</span>
+        </button>
       </div>
     </div>
   </div>
@@ -91,16 +128,38 @@
 
 <!-- Header -->
 <div class="header">
-  <button class="header-hamburger" id="headerHamburger" title="菜单">☰</button>
+  <button class="header-hamburger" id="headerHamburger" title="菜单" aria-label="打开侧边菜单">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"></line><line x1="4" x2="20" y1="6" y2="6"></line><line x1="4" x2="20" y1="18" y2="18"></line></svg>
+  </button>
   <div class="header-left">
-    <span class="connection-dot loading" id="connDot" title="连接状态"></span>
-    <span class="connection-text" id="connText">连接中...</span>
+    <div class="connection-badge">
+      <span class="connection-dot loading" id="connDot" title="连接状态"></span>
+      <span class="connection-text" id="connText">连接中...</span>
+    </div>
   </div>
   <div class="header-right">
-    <button class="btn btn-primary" onclick="openAddModal()">+ 新建任务</button>
-    <span class="help-icon" id="helpIcon" title="快捷键/自然语言帮助" onclick="toggleHelpTooltip(event)">?
-      <span class="help-tooltip" id="helpTooltip"><kbd>N</kbd> 新建 <kbd>T</kbd> 今天 <kbd>/</kbd> 搜索<br>标题框支持自然语言：「明天买牛奶 #生活 高优先级」</span>
+    <!-- Dark / Light Theme Toggle -->
+    <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="切换深色/浅色模式" aria-label="切换主题模式">
+      <svg class="theme-sun-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg>
+      <svg class="theme-moon-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>
+    </button>
+    <!-- Help / Shortcut Tooltip -->
+    <span class="help-icon" id="helpIcon" title="快捷键与帮助" onclick="toggleHelpTooltip(event)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><path d="12 17h.01"></path></svg>
+      <span class="help-tooltip" id="helpTooltip">
+        <div class="help-header">⌨️ 快捷键速查</div>
+        <div class="help-row"><kbd>N</kbd> <span>新建任务</span></div>
+        <div class="help-row"><kbd>T</kbd> <span>切换至今天</span></div>
+        <div class="help-row"><kbd>/</kbd> <span>聚焦搜索输入框</span></div>
+        <div class="help-row"><kbd>Esc</kbd> <span>关闭弹窗</span></div>
+        <div class="help-divider"></div>
+        <div class="help-footer">💡 标题框支持自然语言，失焦自动提取：「明天下午买牛奶 #生活 高优」</div>
+      </span>
     </span>
+    <button class="btn btn-primary" onclick="openAddModal()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+      <span>新建任务</span>
+    </button>
   </div>
 </div>
 
@@ -109,20 +168,25 @@
   <!-- Overview View -->
   <div class="view active" id="view-overview">
     <div class="overview-header">
-      <input type="text" placeholder="搜索任务..." id="overviewSearch" oninput="debouncedRenderOverview()">
+      <div class="search-input-wrapper">
+        <svg class="search-icon" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
+        </svg>
+        <input type="text" placeholder="搜索任务... (按 / 聚焦)" id="overviewSearch" oninput="debouncedRenderOverview()">
+      </div>
       <select id="overviewFilter" aria-label="筛选状态" onchange="renderOverview()">
-        <option value="all">状态</option>
+        <option value="all">全部状态</option>
         <option value="todo">待办</option>
         <option value="done">已完成</option>
       </select>
       <select id="overviewPriority" aria-label="筛选优先级" onchange="renderOverview()">
-        <option value="all">优先级</option>
+        <option value="all">所有优先级</option>
         <option value="high">高</option>
         <option value="medium">中</option>
         <option value="low">低</option>
       </select>
       <select id="overviewTag" aria-label="筛选标签" onchange="renderOverview()">
-        <option value="all">标签</option>
+        <option value="all">全部标签</option>
       </select>
       <label class="filter-toggle" id="archiveLabel" onclick="toggleArchive()" title="点击切换显示已完成任务">
         <input type="checkbox" id="archiveToggle" onchange="renderOverview()">
@@ -133,16 +197,16 @@
     <div id="selectBar" class="select-bar" style="display:none;">
       <span class="select-count" id="selectCount">已选 0 项</span>
       <select id="bulkPriority" onchange="bulkSetPriority()">
-        <option value="">优先级...</option>
+        <option value="">设置优先级...</option>
         <option value="high">高</option>
         <option value="medium">中</option>
         <option value="low">低</option>
       </select>
-      <button class="btn" id="bulkTagBtn" onclick="showBulkTagInput()">+ 标签</button>
-      <input type="text" id="bulkTagInput" placeholder="标签，回车确认"
-        style="display:none;width:8rem;outline:none;"
+      <button class="btn btn-ghost" id="bulkTagBtn" onclick="showBulkTagInput()">+ 标签</button>
+      <input type="text" id="bulkTagInput" placeholder="输入标签，回车确认"
+        style="display:none;width:8.5rem;padding:0.375rem 0.625rem;border:1px solid var(--primary);border-radius:var(--radius-md);outline:none;background:var(--bg-surface);color:var(--text-primary);font-size:0.8125rem;"
         onkeydown="if(event.key==='Enter')bulkAddTag()" onblur="hideBulkTagInput()">
-      <button class="btn" onclick="bulkSetDate(event)" title="设置日期">📅</button>
+      <button class="btn btn-ghost" onclick="bulkSetDate(event)" title="设置日期">📅 日期</button>
       <button class="btn btn-danger" onclick="bulkDelete()">删除</button>
       <button class="btn btn-ghost" onclick="toggleSelectMode()">取消</button>
     </div>
@@ -162,7 +226,7 @@
       </div>
       <div class="today-actions">
         <button class="btn btn-ghost" id="btnGoToday" onclick="goToday()" style="display:none;">← 回到今天</button>
-        <button class="btn btn-primary" onclick="openAddModal(dayViewDate)">+ 添加</button>
+        <button class="btn btn-primary" onclick="openAddModal(dayViewDate)">+ 添加任务</button>
       </div>
     </div>
     <div class="today-list" id="todayList"></div>
@@ -197,7 +261,7 @@
   <!-- Inbox View -->
   <div class="view abs-hide" id="view-inbox">
     <div class="inbox-quick-add">
-      <input type="text" id="inboxInput" placeholder="快速录入待办事项，回车保存..." onkeydown="if(event.key==='Enter')inboxQuickAdd()">
+      <input type="text" id="inboxInput" placeholder="快速录入待办事项，按回车保存..." onkeydown="if(event.key==='Enter')inboxQuickAdd()">
       <button class="btn btn-primary" onclick="inboxQuickAdd()">添加</button>
     </div>
     <div class="inbox-toolbar">
@@ -208,7 +272,7 @@
         <option value="done">已完成</option>
       </select>
       <select id="inboxPriority" aria-label="筛选优先级" onchange="renderInbox()">
-        <option value="all">优先级</option>
+        <option value="all">所有优先级</option>
         <option value="high">高</option>
         <option value="medium">中</option>
         <option value="low">低</option>
@@ -227,7 +291,7 @@
 <!-- Bottom Progress Bar (full width) -->
 <div class="bottom-bar" id="bottomBar">
   <div class="progress-wrapper">
-    <span style="font-size:0.875rem;">📊</span>
+    <span class="progress-brand-icon">⚡</span>
     <div class="progress-bar-outer">
       <div class="progress-bar-inner" id="progressBar" style="width:0%"></div>
     </div>
@@ -241,8 +305,8 @@
 <div class="undo-bar" id="undoBar" style="display:none;">
   <span class="undo-icon">↩</span>
   <span id="undoText"></span>
-  <button class="btn undo-btn" onclick="undoDelete()">撤销</button>
-  <button class="btn undo-dismiss-btn" onclick="document.getElementById('undoBar').style.display='none'">✕</button>
+  <button class="undo-btn" onclick="undoDelete()">撤销</button>
+  <button class="undo-dismiss-btn" onclick="document.getElementById('undoBar').style.display='none'">✕</button>
 </div>
 
 <!-- Toast -->
@@ -251,91 +315,98 @@
 <!-- Add/Edit Modal -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal" id="modal">
-    <h3 id="modalTitle">新建任务</h3>
+    <div class="modal-header">
+      <h3 id="modalTitle">新建任务</h3>
+      <button class="modal-close-btn" onclick="closeModal()" title="关闭" aria-label="关闭">✕</button>
+    </div>
     <div class="modal-body">
-    <div class="form-group">
-      <label>任务标题</label>
-      <input type="text" id="taskTitle" placeholder="任务标题">
-    </div>
-    <div class="form-group">
-      <label>描述</label>
-      <textarea id="taskDesc" placeholder="输入任务描述（可选）"></textarea>
-    </div>
-    <div class="form-group tag-form-group">
-      <label>标签</label>
-      <div class="tag-input-wrap" id="tagInputWrap" onclick="document.getElementById('tagInput').focus()">
-        <input type="text" id="tagInput" placeholder="输入后回车添加" autocomplete="off">
+      <div class="nl-hint-pill">
+        <span>✦</span>
+        <span>标题支持失焦自动识别：日期、时间、优先级与 <code>#标签</code></span>
       </div>
-      <div class="tag-suggestions" id="tagSuggestions"></div>
-    </div>
-    <div class="form-group">
-      <label>优先级</label>
-      <div class="priority-btn-group">
-        <button type="button" class="priority-btn" data-priority="high" onclick="setPriority('high')">高</button>
-        <button type="button" class="priority-btn active" data-priority="medium" onclick="setPriority('medium')">中</button>
-        <button type="button" class="priority-btn" data-priority="low" onclick="setPriority('low')">低</button>
+      <div class="form-group">
+        <label for="taskTitle">任务标题</label>
+        <input type="text" id="taskTitle" placeholder="例如：明天上午10点评审代码 #工作 高优">
       </div>
-    </div>
-    <div class="form-group">
-      <label for="taskDate">日期</label>
-      <div style="display:flex;gap:0.375rem;align-items:center;">
-        <input type="date" id="taskDate" style="flex:1;">
-        <button type="button" class="btn btn-ghost" style="padding:0.25rem 0.625rem;font-size:0.75rem;white-space:nowrap;" onclick="document.getElementById('taskDate').value=todayStr()" title="设置为今天">今天</button>
+      <div class="form-group">
+        <label for="taskDesc">详细描述</label>
+        <textarea id="taskDesc" placeholder="添加备注或任务详细说明（可选）"></textarea>
       </div>
-    </div>
-
-    <!-- Subtask Section -->
-    <div class="form-group">
-      <div class="subtask-section" id="subtaskSection">
-        <label>📋 子任务</label>
-        <div class="progress-row" id="subtaskProgress"></div>
-        <div class="subtask-list" id="subtaskList"></div>
-        <div class="subtask-add-row">
-          <input type="text" id="subtaskInput" placeholder="输入子任务，回车添加..." onkeydown="if(event.key==='Enter')addSubtask()">
-          <button class="btn btn-ghost" style="padding:0.25rem 0.625rem;font-size:0.75rem;" onclick="addSubtask()">添加</button>
+      <div class="form-group tag-form-group">
+        <label>标签分类</label>
+        <div class="tag-input-wrap" id="tagInputWrap" onclick="document.getElementById('tagInput').focus()">
+          <input type="text" id="tagInput" placeholder="输入标签名后回车添加" autocomplete="off">
+        </div>
+        <div class="tag-suggestions" id="tagSuggestions"></div>
+      </div>
+      <div class="form-group">
+        <label>优先级</label>
+        <div class="priority-btn-group">
+          <button type="button" class="priority-btn" data-priority="high" onclick="setPriority('high')">高优先级</button>
+          <button type="button" class="priority-btn active" data-priority="medium" onclick="setPriority('medium')">中优先级</button>
+          <button type="button" class="priority-btn" data-priority="low" onclick="setPriority('low')">低优先级</button>
         </div>
       </div>
-    </div>
-
-    <div class="form-group">
-      <label>循环</label>
-      <select id="taskRecurrenceType" aria-label="重复类型" onchange="onRecurrenceTypeChange()" style="margin-bottom:0.375rem;">
-        <option value="">不循环</option>
-        <option value="daily">每天</option>
-        <option value="weekdays">工作日</option>
-        <option value="weekly">每周</option>
-      </select>
-      <!-- 每周选择器 -->
-      <div id="weeklyDayPicker" style="display:none;margin-bottom:0.375rem;padding-left:0.25rem;">
-        <label style="font-size:0.75rem;color:#888;margin-bottom:0.25rem;display:block;">选择重复的星期</label>
-        <div class="weekday-picker" id="weekdayPicker">
-          <button type="button" class="wd-btn" data-day="1">一</button>
-          <button type="button" class="wd-btn" data-day="2">二</button>
-          <button type="button" class="wd-btn" data-day="3">三</button>
-          <button type="button" class="wd-btn" data-day="4">四</button>
-          <button type="button" class="wd-btn" data-day="5">五</button>
-          <button type="button" class="wd-btn" data-day="6">六</button>
-          <button type="button" class="wd-btn" data-day="0">日</button>
-        </div>
-      </div>
-      <div id="recurrenceOptions" style="display:none;padding-left:0.25rem;">
-        <label style="font-size:0.75rem;color:#888;margin-bottom:0.125rem;">终止条件（可选）</label>
+      <div class="form-group">
+        <label for="taskDate">截止日期</label>
         <div style="display:flex;gap:0.5rem;align-items:center;">
-          <select id="taskRecurrenceEnd" onchange="onRecurrenceEndChange()" style="flex:1;">
-            <option value="none">无限循环</option>
-            <option value="count">指定次数</option>
-            <option value="date">截止日期</option>
-          </select>
-          <input type="number" id="taskRecurrenceCount" min="1" value="5" style="display:none;width:5rem;padding:0.375rem 0.625rem;border:0.0625rem solid #d9d9d9;border-radius:0.375rem;font-size:0.8125rem;" placeholder="次数">
-          <input type="date" id="taskRecurrenceDate" style="display:none;flex:1;padding:0.375rem 0.625rem;border:0.0625rem solid #d9d9d9;border-radius:0.375rem;font-size:0.8125rem;">
+          <input type="date" id="taskDate" style="flex:1;">
+          <button type="button" class="btn btn-ghost" style="padding:0.4375rem 0.75rem;font-size:0.75rem;white-space:nowrap;" onclick="document.getElementById('taskDate').value=todayStr()" title="设置为今天">今天</button>
         </div>
       </div>
-    </div>
+
+      <!-- Subtask Section -->
+      <div class="form-group">
+        <div class="subtask-section" id="subtaskSection">
+          <label>子任务清单</label>
+          <div class="progress-row" id="subtaskProgress"></div>
+          <div class="subtask-list" id="subtaskList"></div>
+          <div class="subtask-add-row">
+            <input type="text" id="subtaskInput" placeholder="输入子任务项，回车添加..." onkeydown="if(event.key==='Enter')addSubtask()">
+            <button class="btn btn-ghost" style="padding:0.375rem 0.75rem;font-size:0.75rem;" onclick="addSubtask()">添加</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="taskRecurrenceType">周期性重复</label>
+        <select id="taskRecurrenceType" aria-label="重复类型" onchange="onRecurrenceTypeChange()" style="margin-bottom:0.5rem;">
+          <option value="">不循环</option>
+          <option value="daily">每天</option>
+          <option value="weekdays">每个工作日</option>
+          <option value="weekly">每周循环</option>
+        </select>
+        <!-- 每周选择器 -->
+        <div id="weeklyDayPicker" style="display:none;margin-bottom:0.5rem;">
+          <label style="font-size:0.75rem;color:var(--text-muted);margin-bottom:0.375rem;display:block;">选择重复的星期</label>
+          <div class="weekday-picker" id="weekdayPicker">
+            <button type="button" class="wd-btn" data-day="1">一</button>
+            <button type="button" class="wd-btn" data-day="2">二</button>
+            <button type="button" class="wd-btn" data-day="3">三</button>
+            <button type="button" class="wd-btn" data-day="4">四</button>
+            <button type="button" class="wd-btn" data-day="5">五</button>
+            <button type="button" class="wd-btn" data-day="6">六</button>
+            <button type="button" class="wd-btn" data-day="0">日</button>
+          </div>
+        </div>
+        <div id="recurrenceOptions" style="display:none;">
+          <label style="font-size:0.75rem;color:var(--text-muted);margin-bottom:0.25rem;display:block;">终止条件（可选）</label>
+          <div style="display:flex;gap:0.5rem;align-items:center;">
+            <select id="taskRecurrenceEnd" onchange="onRecurrenceEndChange()" style="flex:1;">
+              <option value="none">无限循环</option>
+              <option value="count">指定次数</option>
+              <option value="date">指定截止日期</option>
+            </select>
+            <input type="number" id="taskRecurrenceCount" min="1" value="5" style="display:none;width:5.5rem;padding:0.5rem 0.625rem;border:1px solid var(--border-default);border-radius:var(--radius-md);font-size:0.8125rem;background:var(--bg-surface);color:var(--text-primary);" placeholder="次数">
+            <input type="date" id="taskRecurrenceDate" style="display:none;flex:1;padding:0.5rem 0.625rem;border:1px solid var(--border-default);border-radius:var(--radius-md);font-size:0.8125rem;background:var(--bg-surface);color:var(--text-primary);">
+          </div>
+        </div>
+      </div>
     </div>
     <div class="form-actions">
       <button class="btn btn-ghost" onclick="closeModal()">取消</button>
       <button class="btn btn-danger" id="btnDeleteTask" style="display:none;" onclick="deleteCurrentTask()">删除</button>
-      <button class="btn btn-primary" id="btnSaveTask" onclick="saveTask()">保存</button>
+      <button class="btn btn-primary" id="btnSaveTask" onclick="saveTask()">保存任务</button>
     </div>
   </div>
 </div>
