@@ -1,14 +1,14 @@
 {
-  "name": "任务管理器",
-  "short_name": "任务",
-  "description": "任务管理器 - 月/周/日视图 + 看板拖拽",
+  "name": "Task",
+  "short_name": "Task",
+  "description": "Task — 极简现代的日常待办与任务管理",
   "start_url": "/task-manager/",
   "scope": "/task-manager/",
   "id": "task-manager-app",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone"],
-  "background_color": "#f0f2f5",
-  "theme_color": "#4A90D9",
+  "background_color": "#f8fafc",
+  "theme_color": "#2563eb",
   "orientation": "portrait",
   "screenshots": [
     {

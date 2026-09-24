@@ -1,6 +1,6 @@
 {
   "appId": "com.taskflow.app",
-  "appName": "任务管理器",
+  "appName": "Task",
   "webDir": "docs",
   "server": {
     "androidScheme": "https"
