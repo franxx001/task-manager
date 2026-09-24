@@ -2178,9 +2178,11 @@ function toggleTheme() {
     }
   }
 
-  // Register Service Worker
+  // Register Service Worker with forced update check
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      reg.update().catch(() => {});
+    }).catch(() => {});
   }
 
   // 离线模式：跳过登录，直接使用 localStorage
