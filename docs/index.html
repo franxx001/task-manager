@@ -8,7 +8,7 @@
 <title>任务管理器 — TaskFlow</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
-<link rel="stylesheet" href="style.css?v=5.1">
+<link rel="stylesheet" href="style.css?v=5.2">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"
   onerror="console.warn('[task-manager] Supabase CDN 加载失败，将使用离线模式')"></script>
 </head>
@@ -16,18 +16,20 @@
 
 <!-- Login Overlay -->
 <div class="login-overlay hidden" id="loginOverlay">
-  <div class="login-card">
+  <form class="login-card" id="loginForm" method="post" action="javascript:void(0);">
     <div style="font-size:2.25rem;margin-bottom:0.75rem;">⚡</div>
     <h2>TaskFlow 任务管理</h2>
     <p>请输入安全访问密钥以继续</p>
+    <!-- 隐式用户名输入框，确保现代浏览器密码管理器能绑定凭证并提示自动保存 -->
+    <input type="text" name="username" value="user" autocomplete="username" style="display:none;" tabindex="-1" aria-hidden="true">
     <div class="login-key-display" id="loginKeyHelp" style="display:none;">
       密钥保存在服务器 <code>data/auth.json</code> 文件中<br>
       首次启动时已打印在控制台
     </div>
-    <input class="login-input" id="loginKeyInput" type="password" placeholder="输入访问密钥" autofocus>
-    <button class="login-btn" id="loginBtn">进入系统</button>
+    <input class="login-input" id="loginKeyInput" name="password" type="password" autocomplete="current-password" placeholder="输入访问密钥" autofocus required>
+    <button class="login-btn" id="loginBtn" type="submit">进入系统</button>
     <div class="login-error" id="loginError"></div>
-  </div>
+  </form>
 </div>
 
 <div class="app-shell">
@@ -411,8 +413,8 @@
   </div>
 </div>
 
-<script src="config.js?v=5.1"></script>
-<script src="shared.js?v=5.1"></script>
-<script src="app.js?v=5.1"></script>
+<script src="config.js?v=5.2"></script>
+<script src="shared.js?v=5.2"></script>
+<script src="app.js?v=5.2"></script>
 </body>
 </html>

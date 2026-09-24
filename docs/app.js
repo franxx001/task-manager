@@ -358,6 +358,18 @@ async function doLogin() {
   try {
     await apiLogin(key);
     err.textContent = '';
+
+    // 提示浏览器凭据管理器保存凭据 (PasswordCredential API)
+    if (window.PasswordCredential && navigator.credentials && navigator.credentials.store) {
+      try {
+        const form = document.getElementById('loginForm');
+        if (form) {
+          const cred = new window.PasswordCredential(form);
+          navigator.credentials.store(cred).catch(() => {});
+        }
+      } catch {}
+    }
+
     hideLogin();
     setConnection('loading');
     await loadTasks();
@@ -372,12 +384,23 @@ async function doLogin() {
   }
 }
 
-// Login: button click
-document.getElementById('loginBtn').addEventListener('click', doLogin);
-// Login: enter key
-document.getElementById('loginKeyInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') doLogin();
-});
+// Login: form submit event (triggers browser password save prompt)
+const loginForm = document.getElementById('loginForm');
+if (loginForm) {
+  loginForm.addEventListener('submit', e => {
+    e.preventDefault();
+    doLogin();
+  });
+} else {
+  const loginBtn = document.getElementById('loginBtn');
+  if (loginBtn) loginBtn.addEventListener('click', doLogin);
+  const loginInput = document.getElementById('loginKeyInput');
+  if (loginInput) {
+    loginInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') doLogin();
+    });
+  }
+}
 
 async function doLogout() {
   await apiLogout();
