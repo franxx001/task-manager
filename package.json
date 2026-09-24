@@ -8,9 +8,12 @@
     "start": "node dev-server.js",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "eslint . --ext .js,.html --ignore-pattern node_modules --ignore-pattern docs/config.js"
+    "lint": "eslint . --ext .js,.html --ignore-pattern node_modules --ignore-pattern android --ignore-pattern docs/config.js"
   },
   "dependencies": {
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/cli": "^8.5.2",
+    "@capacitor/core": "^8.5.2",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@supabase/supabase-js": "^2.110.2",
     "express": "^4.21.0"
